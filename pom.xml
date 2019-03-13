@@ -117,7 +117,7 @@
                             <artifactId>avm</artifactId>
                             <version>${avm.version}</version>
                             <packaging>jar</packaging>
-                            <file>${project.basedir}/lib/avm.jar</file>
+                            <file>${project.basedir}/src/main/resources/lib/avm/avm.jar</file>
                         </configuration>
                     </execution>
                 </executions>
