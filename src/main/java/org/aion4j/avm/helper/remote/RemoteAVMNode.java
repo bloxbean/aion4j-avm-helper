@@ -45,7 +45,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data:\n " + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -83,7 +83,7 @@ public class RemoteAVMNode {
 
             jo.put("params", paramArray);
 
-            log.debug("Txn Object : " + jo.toString());
+            log.debug("Request \n : " + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -94,7 +94,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel:\n " + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -139,7 +139,7 @@ public class RemoteAVMNode {
 
             jo.put("params", paramArray);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -150,7 +150,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -196,7 +196,7 @@ public class RemoteAVMNode {
 
             jo.put("params", paramArray);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -207,7 +207,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel : \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -266,7 +266,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -277,7 +277,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -311,7 +311,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data for getTransactionCount: " + jo.toString());
+            log.info("Web3Rpc request data for getTransactionCount:\n " + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -322,7 +322,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel for getTransactionCount: " + jsonNode.toString());
+            log.info("Response from Aion kernel for getTransactionCount: " + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -352,7 +352,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -366,7 +366,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n " + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -418,7 +418,7 @@ public class RemoteAVMNode {
 
             jo.put("params", paramArray);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -429,7 +429,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -457,7 +457,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -468,7 +468,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -496,7 +496,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -507,7 +507,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 
@@ -577,7 +577,7 @@ public class RemoteAVMNode {
 
             jo.put("params", params);
 
-            log.info("Web3Rpc request data: " + jo.toString());
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -588,7 +588,7 @@ public class RemoteAVMNode {
             if(jsonNode == null)
                 return null;
 
-            log.info("Response from Aion kernel: " + jsonNode.toString());
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
 
             JSONObject jsonObject = jsonNode.getObject();
 

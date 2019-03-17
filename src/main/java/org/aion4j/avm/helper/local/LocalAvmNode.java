@@ -207,12 +207,12 @@ public class LocalAvmNode {
             String resultData = Helpers.bytesToHexString(result.getReturnData());
             //failed.
             throw new DeploymentFailedException(String.format("Dapp deployment failed. Code: %s, Reason: %s",
-                result.getResultCode().toString(), resultData));
+                    result.getResultCode().toString(), resultData));
         }
     }
 
     private TransactionContext createDeployTransaction(String jarPath, byte[] deployArgs, Address sender, BigInteger value)
-        throws DeploymentFailedException {
+            throws DeploymentFailedException {
 
         Path path = Paths.get(jarPath);
         byte[] jar;
@@ -223,14 +223,14 @@ public class LocalAvmNode {
         }
 
         Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
-            value, new CodeAndArguments(jar, deployArgs).encodeToBytes(), energyLimit, energyPrice);
+                value, new CodeAndArguments(jar, deployArgs).encodeToBytes(), energyLimit, energyPrice);
 
         return TransactionContextImpl.forExternalTransaction(createTransaction, block);
 
     }
 
     public TransactionContext createCallTransaction(Address contract, Address sender, String method, Object[] args,
-                                                           BigInteger value, long energyLimit, long energyPrice) {
+                                                    BigInteger value, long energyLimit, long energyPrice) {
 
         /*if (contract.toBytes().length != Address.LENGTH){
             throw env.fail("call : Invalid Dapp address ");
@@ -298,7 +298,8 @@ public class LocalAvmNode {
             throw new CallFailedException("Deploy arument parsing error", e);
         }
 
-        return ABIEncoder.encodeOneObject(args);
+        return null;
+        //TODO Fix later.... for now just return null for deployArgs return ABIEncoder.encodeOneObject(args);
     }
 
     //Called for remote
@@ -365,7 +366,7 @@ public class LocalAvmNode {
             boolean didCreate = directory.mkdirs();
             // Is this the best way to handle this failure?
             if (!didCreate) {
-               throw new LocalAVMException("Unable create storage folder");
+                throw new LocalAVMException("Unable create storage folder");
             }
         }
     }
