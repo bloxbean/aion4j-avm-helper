@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 public class LocalAvmNode {
@@ -133,8 +134,13 @@ public class LocalAvmNode {
                     if(retObj != null && retObj instanceof org.aion.avm.api.Address) {
                         String addStr = HexUtil.bytesToHexString(((org.aion.avm.api.Address)retObj).unwrap());
                         response.setData(addStr);
-                    } else
+                    } else if(retObj != null && isArray(retObj)) {
+                        Object[] objs = (Object [])retObj;
+                        List retList = Arrays.asList(objs);
+                        response.setData(retList);
+                    } else {
                         response.setData(retObj);
+                    }
                 } catch (Exception e) {
                     response.setData(HexUtil.bytesToHexString(retData));
                 }
@@ -349,6 +355,10 @@ public class LocalAvmNode {
 
                 if(result instanceof org.aion.avm.api.Address) {
                     return HexUtil.bytesToHexString(((org.aion.avm.api.Address)result).unwrap());
+                } else if(result != null && isArray(result)) {
+                    Object[] objs = (Object[]) result;
+                    List retList = Arrays.asList(objs);
+                    return retList;
                 } else
                     return result.toString();
 
@@ -390,6 +400,11 @@ public class LocalAvmNode {
             else
                 return Boolean.parseBoolean(envValue);
         }
+    }
+
+    private static boolean isArray(Object obj)
+    {
+        return obj!=null && obj.getClass().isArray();
     }
 
 }
