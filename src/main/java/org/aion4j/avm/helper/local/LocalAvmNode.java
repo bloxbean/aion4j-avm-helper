@@ -18,7 +18,9 @@ import org.aion4j.avm.helper.exception.DeploymentFailedException;
 import org.aion4j.avm.helper.exception.LocalAVMException;
 import org.aion4j.avm.helper.util.HexUtil;
 import org.aion4j.avm.helper.util.MethodCallArgsUtil;
+import org.apache.http.util.ByteArrayBuffer;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -304,7 +306,24 @@ public class LocalAvmNode {
             throw new CallFailedException("Deploy arument parsing error", e);
         }
 
-        return null;
+        if(args == null) {
+            System.out.println("Not able to encode deploy args properly");
+            return null;
+        }
+
+        try(ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            //Lets encode one by one
+            for (Object arg : args) {
+                byte[] encBytes = ABIEncoder.encodeOneObject(arg);
+                baos.write(encBytes);
+            }
+
+            return baos.toByteArray();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
         //TODO Fix later.... for now just return null for deployArgs return ABIEncoder.encodeOneObject(args);
     }
 
