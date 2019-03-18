@@ -1,5 +1,6 @@
 package org.aion4j.avm.helper.util;
 
+import org.aion.avm.api.Address;
 import org.aion.avm.core.util.Helpers;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 
@@ -17,31 +18,124 @@ public class MethodCallArgsUtil {
 
         List<Object> args = new ArrayList<>();
 
-        boolean isType = true;
+        boolean isType = false;
         String type = null;
+        String prevType = null;
+
+        List<Object> tempHolder = null;
+
         for(String token: tokens) {
+
+            isType = isType(token);
+
             if(isType) {
                 type = token;
-                isType = false;
-            } else {
-                isType = true;
 
-                if(type != null) {
-                    if(type.equals("-I")) args.add(Integer.parseInt(token));
-                    else if(type.equals("-J")) args.add(Long.valueOf(token));
-                    else if(type.equals("-S")) args.add(Short.valueOf(token));
-                    else if(type.equals("-C")) args.add(Character.valueOf(token.charAt(0)));
-                    else if(type.equals("-F")) args.add(Float.valueOf(token));
-                    else if(type.equals("-D")) args.add(Double.valueOf(token));
-                    else if(type.equals("-B")) args.add(Byte.valueOf(token));
-                    else if(type.equals("-Z")) args.add(Boolean.valueOf(token));
-                    else if(type.equals("-A")) args.add(new org.aion.avm.api.Address(Helpers.hexStringToBytes(token)));
-                    else if(type.equals("-T")) args.add(token);
+                //add previous args.. before moving to next type
+                if(tempHolder == null || tempHolder.size() == 0) {
+                    tempHolder = new ArrayList<>();
+
+                    prevType = type; //keep the previous type ..required for conversion
+                    continue; //Seems like first one
                 }
+
+                if(tempHolder.size() == 1 && !isArrayType(prevType)) args.add(tempHolder.get(0)); //Only one value. No array.
+                else {
+                   // args.add((String [])tempHolder.toArray(new String[0]));
+                    args.add(getArray(prevType, tempHolder));
+                }
+
+                tempHolder.clear();
+
+                prevType = type; //keep the previous type... required for conversion later.
+
+            } else {
+                Object value = convertStringToTypeObject(type, token);
+                tempHolder.add(value);
+            }
+        }
+
+        //add remaining
+        if(tempHolder != null) {
+            if (tempHolder.size() == 1 && !isArrayType(prevType)) args.add(tempHolder.get(0)); //Only one value. No array.
+            else {
+                args.add(getArray(prevType, tempHolder)); //add the last item
             }
         }
 
         return args.toArray();
+    }
+
+    private static boolean isArrayType(String type) {
+        if(type == null) return false;
+
+        if(type.endsWith("[]"))
+            return true;
+        else
+            return false;
+    }
+
+    private static Object convertStringToTypeObject(String type, String token) throws MethodArgsParseException{
+        if(type != null) {
+            if(type.startsWith("-I")) return Integer.parseInt(token);
+            else if(type.startsWith("-J")) return Long.valueOf(token);
+            else if(type.startsWith("-S")) return Short.valueOf(token);
+            else if(type.startsWith("-C")) return Character.valueOf(token.charAt(0));
+            else if(type.startsWith("-F")) return Float.valueOf(token);
+            else if(type.startsWith("-D")) return Double.valueOf(token);
+            else if(type.startsWith("-B")) return Byte.valueOf(token);
+            else if(type.startsWith("-Z")) return Boolean.valueOf(token);
+            else if(type.startsWith("-A")) return new org.aion.avm.api.Address(Helpers.hexStringToBytes(token));
+            else if(type.startsWith("-T")) return token;
+            else
+                throw new MethodArgsParseException("Invalid type : " + type);
+        } else {
+            return null;
+        }
+    }
+
+    private static Object getArray(String type, List list) {
+
+        if(type.startsWith("-I")) {
+            return toIntArray(list);
+        }
+        else if(type.startsWith("-J")) {
+            return toLongArray(list);
+        }
+        else if(type.startsWith("-S")) {
+            return toShortArray(list);
+        }
+        else if(type.startsWith("-C")) {
+            return toCharArray(list);
+        }
+        else if(type.startsWith("-F")) {
+            return toFloatArray(list);
+        }
+        else if(type.startsWith("-D")) {
+            return toDoubleArray(list);
+        }
+        else if(type.startsWith("-B")) {
+            return toByteArray(list);
+        }
+        else if(type.startsWith("-Z")) {
+            return toBooleanArray(list);
+        }
+        else if(type.startsWith("-A")) {
+            Address[] objs = new Address[list.size()];
+            for(int i=0; i<list.size();i++) {
+                objs[i] = (Address)list.get(i);
+            }
+           return objs;
+        }
+        else if(type.startsWith("-T")) {
+            String[] objs = new String[list.size()];
+            for(int i=0; i<list.size();i++) {
+                objs[i] = (String)list.get(i);
+            }
+           return objs;
+        }
+
+        return null;
     }
 
     /**
@@ -164,6 +258,100 @@ public class MethodCallArgsUtil {
         }
 
         return tokens.toArray( new String[tokens.size()] );
+    }
+
+    private static boolean isType(String token) {
+        if(token == null) return false;
+
+        switch (token) {
+            case "-I":
+            case "-J":
+            case "-S":
+            case "-C":
+            case "-F":
+            case "-D":
+            case "-B":
+            case "-Z":
+            case "-A":
+            case "-T":
+            case "-I[]":
+            case "-J[]":
+            case "-S[]":
+            case "-C[]":
+            case "-F[]":
+            case "-D[]":
+            case "-B[]":
+            case "-Z[]":
+            case "-A[]":
+            case "-T[]":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static int[] toIntArray(List<Integer> list)  {
+        int[] ret = new int[list.size()];
+        int i = 0;
+        for (Integer e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static long[] toLongArray(List<Long> list)  {
+        long[] ret = new long[list.size()];
+        int i = 0;
+        for (Long e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static short[] toShortArray(List<Short> list)  {
+        short[] ret = new short[list.size()];
+        int i = 0;
+        for (Short e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static char[] toCharArray(List<Character> list)  {
+        char[] ret = new char[list.size()];
+        int i = 0;
+        for (Character e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static float[] toFloatArray(List<Float> list)  {
+        float[] ret = new float[list.size()];
+        int i = 0;
+        for (Float e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static double[] toDoubleArray(List<Double> list)  {
+        double[] ret = new double[list.size()];
+        int i = 0;
+        for (Double e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static byte[] toByteArray(List<Byte> list)  {
+        byte[] ret = new byte[list.size()];
+        int i = 0;
+        for (Byte e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static boolean[] toBooleanArray(List<Boolean> list)  {
+        boolean[] ret = new boolean[list.size()];
+        int i = 0;
+        for (Boolean e : list)
+            ret[i++] = e;
+        return ret;
     }
 
     public static void main(String[] args) throws Exception {
