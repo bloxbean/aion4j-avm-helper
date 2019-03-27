@@ -1,7 +1,7 @@
 package org.aion4j.avm.helper.util;
 
-import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.api.Address;
+import org.aion.avm.userlib.abi.ABIEncoder;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 import org.junit.Test;
 

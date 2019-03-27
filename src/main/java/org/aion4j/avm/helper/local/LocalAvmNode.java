@@ -1,13 +1,13 @@
 package org.aion4j.avm.helper.local;
 
-import org.aion.avm.api.ABIDecoder;
-import org.aion.avm.api.ABIEncoder;
 import org.aion.avm.core.AvmConfiguration;
 import org.aion.avm.core.CommonAvmFactory;
 import org.aion.avm.core.util.CodeAndArguments;
 import org.aion.avm.core.util.Helpers;
 import org.aion.avm.core.util.StorageWalker;
 import org.aion.avm.tooling.StandardCapabilities;
+import org.aion.avm.userlib.abi.ABIDecoder;
+import org.aion.avm.userlib.abi.ABIEncoder;
 import org.aion.kernel.*;
 import org.aion.types.Address;
 import org.aion.vm.api.interfaces.*;
@@ -37,7 +37,7 @@ public class LocalAvmNode {
     Block block = new Block(new byte[32], 1, Helpers.randomAddress(), System.currentTimeMillis(), new byte[0]);
 
     private  VirtualMachine avm;
-    private KernelInterfaceImpl kernel;
+    private TestingKernel kernel;
 
     private long energyLimit = 100000000; //TODO Needs to configured by the project
     private long energyPrice = 1L;  //TODO Needs to be configured by the project
@@ -54,7 +54,7 @@ public class LocalAvmNode {
     public void init(String storagePath) {
         verifyStorageExists(storagePath);
         File storagePathFile = new File(storagePath);
-        kernel = new KernelInterfaceImpl(storagePathFile);
+        kernel = new TestingKernel(storagePathFile);
 
         //Open account
         if(kernel.getBalance(defaultAddress) == null || kernel.getBalance(defaultAddress) == BigInteger.ZERO) {

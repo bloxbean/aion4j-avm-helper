@@ -1,7 +1,7 @@
 package org.aion4j.avm.helper.local;
 
-import org.aion.avm.api.ABIDecoder;
 import org.aion.avm.api.Address;
+import org.aion.avm.userlib.abi.ABIDecoder;
 import org.aion4j.avm.helper.exception.CallFailedException;
 import org.aion4j.avm.helper.util.HexUtil;
 import org.junit.Test;
