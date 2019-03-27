@@ -6,6 +6,7 @@ import org.aion.avm.core.util.CodeAndArguments;
 import org.aion.avm.core.util.Helpers;
 import org.aion.avm.core.util.StorageWalker;
 import org.aion.avm.tooling.StandardCapabilities;
+import org.aion.avm.tooling.abi.ABICompiler;
 import org.aion.avm.userlib.abi.ABIDecoder;
 import org.aion.avm.userlib.abi.ABIEncoder;
 import org.aion.kernel.*;
@@ -230,11 +231,25 @@ public class LocalAvmNode {
             throw new DeploymentFailedException("deploy : Invalid location of Dapp jar");
         }
 
+        byte[] deployBytes = new CodeAndArguments(jar, deployArgs).encodeToBytes();
+        deployBytes = compileDappBytes(deployBytes);
+
         Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
-                value, new CodeAndArguments(jar, deployArgs).encodeToBytes(), energyLimit, energyPrice);
+                value, deployBytes, energyLimit, energyPrice);
 
         return TransactionContextImpl.forExternalTransaction(createTransaction, block);
 
+    }
+
+    private static byte[] compileDappBytes(byte[] dappBytes) {
+        ABICompiler compiler = new ABICompiler();
+        CodeAndArguments oldCodeAndArguments = CodeAndArguments.decodeFromBytes(dappBytes);
+        compiler.compile(oldCodeAndArguments.code);
+        CodeAndArguments newCodeAndArguments = new CodeAndArguments(compiler.getJarFileBytes(),
+                oldCodeAndArguments.arguments);
+        byte[] deployBytes = newCodeAndArguments.encodeToBytes();
+
+        return deployBytes;
     }
 
     public TransactionContext createCallTransaction(Address contract, Address sender, String method, Object[] args,
@@ -311,20 +326,7 @@ public class LocalAvmNode {
             return null;
         }
 
-        try(ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            //Lets encode one by one
-            for (Object arg : args) {
-                byte[] encBytes = ABIEncoder.encodeOneObject(arg);
-                baos.write(encBytes);
-            }
-
-            return baos.toByteArray();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        //TODO Fix later.... for now just return null for deployArgs return ABIEncoder.encodeOneObject(args);
+        return ABIEncoder.encodeDeploymentArguments(args);
     }
 
     //Called for remote
@@ -340,7 +342,7 @@ public class LocalAvmNode {
             if(deployArgsBytes == null) deployArgsBytes = new byte[0];
 
             return Helpers.bytesToHexString(
-                    new CodeAndArguments(jar, deployArgsBytes).encodeToBytes());
+                    compileDappBytes(new CodeAndArguments(jar, deployArgsBytes).encodeToBytes()));
         } catch (IOException e) {
             System.out.println(e.toString());
             return null;
