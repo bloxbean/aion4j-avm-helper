@@ -11,7 +11,10 @@ import org.aion.avm.userlib.abi.ABIDecoder;
 import org.aion.avm.userlib.abi.ABIEncoder;
 import org.aion.kernel.*;
 import org.aion.types.Address;
-import org.aion.vm.api.interfaces.*;
+import org.aion.vm.api.interfaces.IExecutionLog;
+import org.aion.vm.api.interfaces.TransactionContext;
+import org.aion.vm.api.interfaces.TransactionResult;
+import org.aion.vm.api.interfaces.VirtualMachine;
 import org.aion4j.avm.helper.api.CallResponse;
 import org.aion4j.avm.helper.api.DeployResponse;
 import org.aion4j.avm.helper.exception.CallFailedException;
@@ -19,9 +22,7 @@ import org.aion4j.avm.helper.exception.DeploymentFailedException;
 import org.aion4j.avm.helper.exception.LocalAVMException;
 import org.aion4j.avm.helper.util.HexUtil;
 import org.aion4j.avm.helper.util.MethodCallArgsUtil;
-import org.apache.http.util.ByteArrayBuffer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -42,6 +43,9 @@ public class LocalAvmNode {
 
     private long energyLimit = 100000000; //TODO Needs to configured by the project
     private long energyPrice = 1L;  //TODO Needs to be configured by the project
+
+    //By default doesn't do abiCompile. The deployed jar should be pre-compiled and pass to deploy.
+    private boolean forceAbiCompile = false;
 
     public LocalAvmNode(String storagePath, String senderAddress) {
         if(storagePath.isEmpty())
@@ -232,7 +236,9 @@ public class LocalAvmNode {
         }
 
         byte[] deployBytes = new CodeAndArguments(jar, deployArgs).encodeToBytes();
-        deployBytes = compileDappBytes(deployBytes);
+
+        if(this.forceAbiCompile) //do AbiCompile
+            deployBytes = compileDappBytes(deployBytes);
 
         Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
                 value, deployBytes, energyLimit, energyPrice);
@@ -241,9 +247,9 @@ public class LocalAvmNode {
 
     }
 
-    private static byte[] compileDappBytes(byte[] dappBytes) {
+    private static byte[] compileDappBytes(byte[] dappBytesWithArgs) {
         ABICompiler compiler = new ABICompiler();
-        CodeAndArguments oldCodeAndArguments = CodeAndArguments.decodeFromBytes(dappBytes);
+        CodeAndArguments oldCodeAndArguments = CodeAndArguments.decodeFromBytes(dappBytesWithArgs);
         compiler.compile(oldCodeAndArguments.code);
         CodeAndArguments newCodeAndArguments = new CodeAndArguments(compiler.getJarFileBytes(),
                 oldCodeAndArguments.arguments);
@@ -309,6 +315,14 @@ public class LocalAvmNode {
         } catch (Exception ex) {
             throw new RuntimeException("Unable to explore storage for dApp : " + dappAddress, ex);
         }
+    }
+
+    /**
+     * Enforce abiCompile during deploy
+     * @param flag
+     */
+    public void setForceAbiCompile(boolean flag) {
+        this.forceAbiCompile = flag;
     }
 
     //Encode deployment args from command line str to byte[]. Needed during deployment.
@@ -389,6 +403,18 @@ public class LocalAvmNode {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Called mainly from maven goal to compile a Jar content with ABICompiler, mainly to process annotations.
+     * @param jarBytes
+     * @return
+     */
+    public static byte[] compileJarBytes(byte[] jarBytes) {
+        ABICompiler compiler = new ABICompiler();
+        compiler.compile(jarBytes);
+
+        return compiler.getJarFileBytes();
     }
 
     private static void verifyStorageExists(String storageRoot) {
