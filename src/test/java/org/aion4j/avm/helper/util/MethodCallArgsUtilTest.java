@@ -1,7 +1,7 @@
 package org.aion4j.avm.helper.util;
 
-import org.aion.avm.api.Address;
-import org.aion.avm.userlib.abi.ABIEncoder;
+import avm.Address;
+import org.aion.avm.core.util.ABIUtil;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 import org.junit.Test;
 
@@ -62,7 +62,7 @@ public class MethodCallArgsUtilTest {
         //String argStr = "-A 0x1122334455667788112233445566778811223344556677881122334455667788 -J 100 -I 45 -B -1 -T hello -T 'My name is John' -I 9";
 
         Object[] args = MethodCallArgsUtil.parseMethodArgs(argStr);
-        byte[] arguments = ABIEncoder.encodeMethodArguments("testArray", args);
+        byte[] arguments = ABIUtil.encodeMethodArguments("testArray", args);
 
         assertNotNull(args);
 
@@ -73,7 +73,7 @@ public class MethodCallArgsUtilTest {
         String argStr = "-T first second -I 6 9 -T test -A 0xa0c40d2bb3e0248b16f4f1bd5735dc22cd84b580bbc301f8cebc83e25030c6ea 0xa0c40d2bb3e0248b16f4f1bd5735dc22cd84b580bbc301f8cebc83e25030c6ea -S 4 5 -F 1.2 3.4 -D 1.2 2.1  -Z true false -B 1 2";
 
         Object[] args = MethodCallArgsUtil.parseMethodArgs(argStr);
-        byte[] arguments = ABIEncoder.encodeMethodArguments("testArray", args);
+        byte[] arguments = ABIUtil.encodeMethodArguments("testArray", args);
 
         assertNotNull(args);
 

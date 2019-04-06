@@ -2,6 +2,7 @@ package org.aion4j.avm.helper.local;
 
 import org.aion.avm.core.AvmConfiguration;
 import org.aion.avm.core.CommonAvmFactory;
+import org.aion.avm.core.util.ABIUtil;
 import org.aion.avm.core.util.CodeAndArguments;
 import org.aion.avm.core.util.Helpers;
 import org.aion.avm.core.util.StorageWalker;
@@ -136,10 +137,10 @@ public class LocalAvmNode {
 
             if(retData != null) {
                 try {
-                    Object retObj = ABIDecoder.decodeOneObject(retData);
+                    Object retObj = ABIUtil.decodeOneObject(retData);
 
-                    if(retObj != null && retObj instanceof org.aion.avm.api.Address) {
-                        String addStr = HexUtil.bytesToHexString(((org.aion.avm.api.Address)retObj).unwrap());
+                    if(retObj != null && retObj instanceof avm.Address) {
+                        String addStr = HexUtil.bytesToHexString(((avm.Address)retObj).unwrap());
                         response.setData(addStr);
                     } else if(retObj != null && isArray(retObj)) {
                         Object[] objs = (Object [])retObj;
@@ -269,7 +270,7 @@ public class LocalAvmNode {
             throw env.fail("call : Invalid sender address");
         }*/
 
-        byte[] arguments = ABIEncoder.encodeMethodArguments(method, args);
+        byte[] arguments = ABIUtil.encodeMethodArguments(method, args);
 
 //        String callData = Helpers.bytesToHexString(arguments);
 //        System.out.println("******** Call data: " + callData);
@@ -311,7 +312,7 @@ public class LocalAvmNode {
     public void explore(String dappAddress, PrintStream printStream) throws Exception {
 
         try {
-            StorageWalker.walkAllStaticsForDapp(printStream, kernel, Address.wrap(HexUtil.hexStringToBytes(dappAddress)));
+            StorageWalker.walkAllStaticsForDapp(new StandardCapabilities(), printStream, kernel, Address.wrap(HexUtil.hexStringToBytes(dappAddress)));
         } catch (Exception ex) {
             throw new RuntimeException("Unable to explore storage for dApp : " + dappAddress, ex);
         }
@@ -340,7 +341,7 @@ public class LocalAvmNode {
             return null;
         }
 
-        return ABIEncoder.encodeDeploymentArguments(args);
+        return ABIUtil.encodeDeploymentArguments(args);
     }
 
     //Called for remote
@@ -378,18 +379,18 @@ public class LocalAvmNode {
 
     //called from remote impl to encode method call args
     public static String encodeMethodCall(String method, Object[] args) {
-        return Helpers.bytesToHexString(ABIEncoder.encodeMethodArguments(method, args));
+        return Helpers.bytesToHexString(ABIUtil.encodeMethodArguments(method, args));
     }
 
     //called for remote impl to decode hexstring to object
     public static Object decodeResult(String hex) {
         try {
 
-            Object result = ABIDecoder.decodeOneObject(HexUtil.hexStringToBytes(hex));
+            Object result = ABIUtil.decodeOneObject(HexUtil.hexStringToBytes(hex));
             if(result != null) {
 
-                if(result instanceof org.aion.avm.api.Address) {
-                    return HexUtil.bytesToHexString(((org.aion.avm.api.Address)result).unwrap());
+                if(result instanceof avm.Address) {
+                    return HexUtil.bytesToHexString(((avm.Address)result).unwrap());
                 } else if(result != null && isArray(result)) {
                     Object[] objs = (Object[]) result;
                     List retList = Arrays.asList(objs);

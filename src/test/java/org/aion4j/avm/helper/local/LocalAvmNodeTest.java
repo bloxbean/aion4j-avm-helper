@@ -1,11 +1,9 @@
 package org.aion4j.avm.helper.local;
 
-import org.aion.avm.api.Address;
-import org.aion.avm.userlib.abi.ABIDecoder;
+import org.aion.avm.core.util.ABIUtil;
 import org.aion4j.avm.helper.api.CallResponse;
 import org.aion4j.avm.helper.api.DeployResponse;
 import org.aion4j.avm.helper.exception.CallFailedException;
-import org.aion4j.avm.helper.util.HexUtil;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,7 +11,6 @@ import org.junit.Test;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
@@ -57,7 +54,7 @@ public class LocalAvmNodeTest {
         String cmdArgs = "-T John";
 
         byte[] bytes = LocalAvmNode.encodeDeployArgsString(cmdArgs);
-        Object decoded = ABIDecoder.decodeOneObject(bytes);
+        Object decoded = ABIUtil.decodeOneObject(bytes);
         System.out.println(decoded);
 
         assertEquals("John", decoded);
@@ -68,7 +65,7 @@ public class LocalAvmNodeTest {
         String cmdArgs = "-I 8000";
 
         byte[] bytes = LocalAvmNode.encodeDeployArgsString(cmdArgs);
-        Object decoded = ABIDecoder.decodeOneObject(bytes);
+        Object decoded = ABIUtil.decodeOneObject(bytes);
         System.out.println(decoded);
 
         assertEquals(8000, decoded);

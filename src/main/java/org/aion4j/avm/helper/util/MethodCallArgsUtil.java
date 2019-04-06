@@ -1,6 +1,6 @@
 package org.aion4j.avm.helper.util;
 
-import org.aion.avm.api.Address;
+import avm.Address;
 import org.aion.avm.core.util.Helpers;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 
@@ -85,7 +85,7 @@ public class MethodCallArgsUtil {
             else if(type.startsWith("-D")) return Double.valueOf(token);
             else if(type.startsWith("-B")) return Byte.valueOf(token);
             else if(type.startsWith("-Z")) return Boolean.valueOf(token);
-            else if(type.startsWith("-A")) return new org.aion.avm.api.Address(Helpers.hexStringToBytes(token));
+            else if(type.startsWith("-A")) return new avm.Address(Helpers.hexStringToBytes(token));
             else if(type.startsWith("-T")) return token;
             else
                 throw new MethodArgsParseException("Invalid type : " + type);
