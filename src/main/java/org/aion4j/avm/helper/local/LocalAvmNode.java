@@ -8,8 +8,7 @@ import org.aion.avm.core.util.Helpers;
 import org.aion.avm.core.util.StorageWalker;
 import org.aion.avm.tooling.StandardCapabilities;
 import org.aion.avm.tooling.abi.ABICompiler;
-import org.aion.avm.userlib.abi.ABIDecoder;
-import org.aion.avm.userlib.abi.ABIEncoder;
+import org.aion.avm.tooling.deploy.JarOptimizer;
 import org.aion.kernel.*;
 import org.aion.types.Address;
 import org.aion.vm.api.interfaces.IExecutionLog;
@@ -23,6 +22,7 @@ import org.aion4j.avm.helper.exception.DeploymentFailedException;
 import org.aion4j.avm.helper.exception.LocalAVMException;
 import org.aion4j.avm.helper.util.HexUtil;
 import org.aion4j.avm.helper.util.MethodCallArgsUtil;
+import static org.aion4j.avm.helper.util.ConfigUtil.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class LocalAvmNode {
-
     private Address defaultAddress; // = KernelInterfaceImpl.PREMINED_ADDRESS;
     Block block = new Block(new byte[32], 1, Helpers.randomAddress(), System.currentTimeMillis(), new byte[0]);
 
@@ -71,9 +70,9 @@ public class LocalAvmNode {
         }
 
         AvmConfiguration avmConfiguration = new AvmConfiguration();
-        avmConfiguration.enableVerboseConcurrentExecutor=getAvmConfigurationBooleanProps("enableVerboseConcurrentExecutor", false);
-        avmConfiguration.enableVerboseContractErrors=getAvmConfigurationBooleanProps("enableVerboseContractErrors", false);
-        avmConfiguration.preserveDebuggability=getAvmConfigurationBooleanProps("preserveDebuggability", false);
+        avmConfiguration.enableVerboseConcurrentExecutor=getAvmConfigurationBooleanProps(ENABLE_VERBOSE_CONCURRENT_EXECUTOR, false);
+        avmConfiguration.enableVerboseContractErrors=getAvmConfigurationBooleanProps(ENABLE_VERBOSE_CONTRACT_ERRORS, false);
+        avmConfiguration.preserveDebuggability=getAvmConfigurationBooleanProps(PRESERVE_DEBUGGABILITY, false);
 
         avm = CommonAvmFactory.buildAvmInstanceForConfiguration(new StandardCapabilities(), avmConfiguration);
     }
@@ -418,6 +417,11 @@ public class LocalAvmNode {
         return compiler.getJarFileBytes();
     }
 
+    public static byte[] optimizeJarBytes(byte[] jarBytes, boolean debugMode) {
+        JarOptimizer jarOptimizer = new JarOptimizer(debugMode);
+        return jarOptimizer.optimize(jarBytes);
+    }
+
     private static void verifyStorageExists(String storageRoot) {
         File directory = new File(storageRoot);
         if (!directory.isDirectory()) {
@@ -433,7 +437,7 @@ public class LocalAvmNode {
         avm.shutdown();
     }
 
-    private static boolean getAvmConfigurationBooleanProps(String name, boolean defaultValue) {
+    /*private static boolean getAvmConfigurationBooleanProps(String name, boolean defaultValue) {
 
         String value = System.getProperty(name);
 
@@ -448,7 +452,7 @@ public class LocalAvmNode {
             else
                 return Boolean.parseBoolean(envValue);
         }
-    }
+    }*/
 
     private static boolean isArray(Object obj)
     {
