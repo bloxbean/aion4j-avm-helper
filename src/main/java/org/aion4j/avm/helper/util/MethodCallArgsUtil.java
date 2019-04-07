@@ -5,6 +5,7 @@ import org.aion.avm.core.util.Helpers;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -41,8 +42,13 @@ public class MethodCallArgsUtil {
 
                 if(tempHolder.size() == 1 && !isArrayType(prevType)) args.add(tempHolder.get(0)); //Only one value. No array.
                 else {
-                   // args.add((String [])tempHolder.toArray(new String[0]));
-                    args.add(getArray(prevType, tempHolder));
+
+                    if(is2DArrayType(prevType)) {
+                        args.add(get2DArray(prevType, tempHolder));
+                    } else { //One dimensional array
+                        // args.add((String [])tempHolder.toArray(new String[0]));
+                        args.add(getArray(prevType, tempHolder));
+                    }
                 }
 
                 tempHolder.clear();
@@ -50,8 +56,13 @@ public class MethodCallArgsUtil {
                 prevType = type; //keep the previous type... required for conversion later.
 
             } else {
-                Object value = convertStringToTypeObject(type, token);
-                tempHolder.add(value);
+
+                if(is2DArrayType(type)) {
+                    tempHolder.add(token); // don't convert now for 2DArray. It will be done later.
+                } else {
+                    Object value = convertStringToTypeObject(type, token);
+                    tempHolder.add(value);
+                }
             }
         }
 
@@ -59,7 +70,11 @@ public class MethodCallArgsUtil {
         if(tempHolder != null) {
             if (tempHolder.size() == 1 && !isArrayType(prevType)) args.add(tempHolder.get(0)); //Only one value. No array.
             else {
-                args.add(getArray(prevType, tempHolder)); //add the last item
+                if(is2DArrayType(prevType)) {
+                    args.add(get2DArray(prevType, tempHolder));
+                } else {
+                    args.add(getArray(prevType, tempHolder)); //add the last item
+                }
             }
         }
 
@@ -70,6 +85,15 @@ public class MethodCallArgsUtil {
         if(type == null) return false;
 
         if(type.endsWith("[]"))
+            return true;
+        else
+            return false;
+    }
+
+    private static boolean is2DArrayType(String type) {
+        if(type == null) return false;
+
+        if(type.endsWith("[][]"))
             return true;
         else
             return false;
@@ -95,7 +119,6 @@ public class MethodCallArgsUtil {
     }
 
     private static Object getArray(String type, List list) {
-
         if(type.startsWith("-I")) {
             return toIntArray(list);
         }
@@ -136,6 +159,100 @@ public class MethodCallArgsUtil {
         }
 
         return null;
+    }
+
+    private static Object get2DArray(String type, List list) throws MethodArgsParseException {
+
+        int rows = list.size();
+        int cols = parseRowElementsIn2DArray((String)list.get(0)).length;
+
+        //create  2D array
+        Object a2dObj = init2DArray(type, rows, cols);
+
+        for(int i=0; i<list.size(); i++) {
+
+            String rawString = (String)list.get(i);
+            String[] tokens = parseRowElementsIn2DArray(rawString);
+
+            List elmList = new ArrayList();
+
+            for(int j=0; j<tokens.length; j++) {
+                Object value = convertStringToTypeObject(type, tokens[j]);
+                assignValueIn2DArray(type, a2dObj, i, j, value);
+            }
+        }
+
+        return a2dObj;
+    }
+
+    private static String[] parseRowElementsIn2DArray(String rowStr) throws MethodArgsParseException {
+
+        if(rowStr == null)
+            return new String[0];
+
+        String[] rowElms = null;
+        if(rowStr.contains(",")) {
+            rowElms = rowStr.split("\\s*,\\s*");
+        } else {
+            rowElms = translateCommandline(rowStr);
+        }
+
+        for(int i=0; i<rowElms.length; i++) {
+            rowElms[i] = rowElms[i] != null? rowElms[i].trim(): null;
+        }
+
+        return rowElms;
+    }
+
+    private static Object init2DArray(String type, int rows, int cols) {
+
+        if (type.startsWith("-I[][]")) { ;
+           return new int[rows][cols];
+        } else if (type.startsWith("-J[][]")) {
+            return new long[rows][cols];
+        } else if (type.startsWith("-S[][]")) {
+            return new short[rows][cols];
+        } else if (type.startsWith("-C[][]")) {
+            return new char[rows][cols];
+        } else if (type.startsWith("-F[][]")) {
+            return new float[rows][cols];
+        } else if (type.startsWith("-D[][]")) {
+            return new double[rows][cols];
+        } else if (type.startsWith("-B[][]")) {
+            return new byte[rows][cols];
+        } else if (type.startsWith("-Z[][]")) {
+            return new boolean[rows][cols];
+        } else if (type.startsWith("-A[][]")) {
+            return new Address[rows][cols];
+        } else if (type.startsWith("-T[][]")) {
+            return new String[rows][cols];
+        }
+
+        return null;
+    }
+
+    private static void assignValueIn2DArray(String type, Object arr, int row, int col, Object value) {
+        if (type.startsWith("-I[][]")) { ;
+            ((int[][])arr)[row][col] = (int)value;
+        } else if (type.startsWith("-J[][]")) {
+            ((long[][])arr)[row][col] = (long)value;
+        } else if (type.startsWith("-S[][]")) {
+            ((short[][])arr)[row][col] = (short)value;
+        } else if (type.startsWith("-C[][]")) {
+            ((char[][])arr)[row][col] = (char)value;
+        } else if (type.startsWith("-F[][]")) {
+            ((float[][])arr)[row][col] = (float)value;
+        } else if (type.startsWith("-D[][]")) {
+            ((double[][])arr)[row][col] = (double)value;
+        } else if (type.startsWith("-B[][]")) {
+            ((byte[][])arr)[row][col] = (byte)value;
+        } else if (type.startsWith("-Z[][]")) {
+            ((boolean[][])arr)[row][col] = (boolean)value;
+        } else if (type.startsWith("-A[][]")) {
+            ((Address[][])arr)[row][col] = (Address)value;
+        } else if (type.startsWith("-T[][]")) {
+            ((String[][])arr)[row][col] = (String)value;
+        }
     }
 
     /**
@@ -284,6 +401,16 @@ public class MethodCallArgsUtil {
             case "-Z[]":
             case "-A[]":
             case "-T[]":
+            case "-I[][]":
+            case "-J[][]":
+            case "-S[][]":
+            case "-C[][]":
+            case "-F[][]":
+            case "-D[][]":
+            case "-B[][]":
+            case "-Z[][]":
+            case "-A[][]":
+            case "-T[][]":
                 return true;
             default:
                 return false;
@@ -353,6 +480,185 @@ public class MethodCallArgsUtil {
             ret[i++] = e;
         return ret;
     }
+
+    // Multi dimensional return value in method call - helper methods
+    /**
+     * Used to print return value in a call method
+     * @param data
+     * @return
+     */
+    public static String print2DArray(Object data) {
+        Class clazz = data.getClass();
+
+        if (clazz == byte[][].class) {
+            byte[][] arr = (byte[][])data;
+            return print2Darray(arr);
+        } else if (clazz == boolean[][].class) {
+            boolean[][] arr = (boolean[][])data;
+            return print2Darray(arr);
+        } else if (clazz == char[][].class) {
+            char[][] arr = (char[][])data;
+            return print2Darray(arr);
+        } else if (clazz == short[][].class) {
+            short[][] arr = (short[][])data;
+            return print2Darray(arr);
+        } else if (clazz == int[][].class) {
+            int[][] arr = (int[][])data;
+            return print2Darray(arr);
+        } else if (clazz == long[][].class) {
+            long[][] arr = (long[][])data;
+            return print2Darray(arr);
+        } else if (clazz == float[][].class) {
+            float[][] arr = (float[][]) data;
+            return print2Darray(arr);
+        } else if (clazz == double[][].class) {
+            double[][] arr = (double[][])data;
+            return print2Darray(arr);
+        }
+
+        return null;
+    }
+
+    public static String printArray(Object data) {
+        Class clazz = data.getClass();
+
+        if (clazz == byte[].class) {
+            byte[] arr = (byte[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == boolean[].class) {
+            boolean[] arr = (boolean[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == char[].class) {
+            char[] arr = (char[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == short[].class) {
+            short[] arr = (short[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == int[].class) {
+            int[] arr = (int[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == long[].class) {
+            long[] arr = (long[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == float[].class) {
+            float[] arr = (float[]) data;
+            return Arrays.toString(arr);
+        } else if (clazz == double[].class) {
+            double[] arr = (double[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == Address[].class) {
+            Address[] arr = (Address[])data;
+            return Arrays.toString(arr);
+        }else if (clazz == String[].class) {
+            String[] arr = (String[])data;
+            return Arrays.toString(arr);
+        }
+
+        return null;
+    }
+
+    private static String print2Darray(byte[][] objs) {
+        StringBuilder sb = new StringBuilder();
+
+        for(byte[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(boolean[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(boolean[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(short[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(short[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(int[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(int[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(long[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(long[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(char[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(char[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(float[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(float[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private static String print2Darray(double[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(double[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+    //Method return decode value print ends
 
     public static void main(String[] args) throws Exception {
 

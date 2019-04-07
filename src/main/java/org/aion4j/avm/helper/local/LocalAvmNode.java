@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -138,13 +139,21 @@ public class LocalAvmNode {
                 try {
                     Object retObj = ABIUtil.decodeOneObject(retData);
 
-                    if(retObj != null && retObj instanceof avm.Address) {
-                        String addStr = HexUtil.bytesToHexString(((avm.Address)retObj).unwrap());
+                    if (retObj != null && retObj instanceof avm.Address) {
+                        String addStr = HexUtil.bytesToHexString(((avm.Address) retObj).unwrap());
                         response.setData(addStr);
+                    } else if(retObj != null && is2DArray(retObj)) {
+                        String finalRet = MethodCallArgsUtil.print2DArray(retObj);
+                        if(finalRet == null)
+                            response.setData(HexUtil.bytesToHexString(retData));
+                        else
+                            response.setData(finalRet);
                     } else if(retObj != null && isArray(retObj)) {
-                        Object[] objs = (Object [])retObj;
-                        List retList = Arrays.asList(objs);
-                        response.setData(retList);
+                        String finalRet = MethodCallArgsUtil.printArray(retObj);
+                        if(finalRet == null)
+                            response.setData(HexUtil.bytesToHexString(retData));
+                        else
+                            response.setData(finalRet);
                     } else {
                         response.setData(retObj);
                     }
@@ -388,12 +397,20 @@ public class LocalAvmNode {
             Object result = ABIUtil.decodeOneObject(HexUtil.hexStringToBytes(hex));
             if(result != null) {
 
-                if(result instanceof avm.Address) {
-                    return HexUtil.bytesToHexString(((avm.Address)result).unwrap());
+                if (result instanceof avm.Address) {
+                    return HexUtil.bytesToHexString(((avm.Address) result).unwrap());
+                } else if(result != null && is2DArray(result)) {
+                    String finalRet = MethodCallArgsUtil.print2DArray(result);
+                    if(finalRet == null)
+                        return hex;
+                    else
+                        return finalRet;
                 } else if(result != null && isArray(result)) {
-                    Object[] objs = (Object[]) result;
-                    List retList = Arrays.asList(objs);
-                    return retList;
+                    String finalRet = MethodCallArgsUtil.printArray(result);
+                    if(finalRet == null)
+                        return hex;
+                    else
+                        return finalRet;
                 } else
                     return result.toString();
 
@@ -440,6 +457,11 @@ public class LocalAvmNode {
     private static boolean isArray(Object obj)
     {
         return obj!=null && obj.getClass().isArray();
+    }
+
+    private static boolean is2DArray(Object obj)
+    {
+        return obj!=null && obj.getClass().getTypeName().endsWith("[][]");
     }
 
 }
