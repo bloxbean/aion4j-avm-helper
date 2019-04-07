@@ -233,7 +233,7 @@ public class LocalAvmNode {
         try {
             jar = Files.readAllBytes(path);
         }catch (IOException e){
-            throw new DeploymentFailedException("deploy : Invalid location of Dapp jar");
+            throw new DeploymentFailedException("deploy : Invalid location of Dapp jar - " + jarPath);
         }
 
         byte[] deployBytes = new CodeAndArguments(jar, deployArgs).encodeToBytes();
