@@ -437,23 +437,6 @@ public class LocalAvmNode {
         avm.shutdown();
     }
 
-    /*private static boolean getAvmConfigurationBooleanProps(String name, boolean defaultValue) {
-
-        String value = System.getProperty(name);
-
-        if(value != null && !value.isEmpty())
-            return Boolean.parseBoolean(value);
-        else {
-            name = name.replace(".", "_");
-            String envValue = System.getenv(name);
-
-            if(envValue == null)
-                return defaultValue;
-            else
-                return Boolean.parseBoolean(envValue);
-        }
-    }*/
-
     private static boolean isArray(Object obj)
     {
         return obj!=null && obj.getClass().isArray();
