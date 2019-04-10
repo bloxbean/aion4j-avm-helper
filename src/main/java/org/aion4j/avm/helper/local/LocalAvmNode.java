@@ -5,7 +5,6 @@ import org.aion.avm.core.CommonAvmFactory;
 import org.aion.avm.core.util.ABIUtil;
 import org.aion.avm.core.util.CodeAndArguments;
 import org.aion.avm.core.util.Helpers;
-import org.aion.avm.core.util.StorageWalker;
 import org.aion.avm.tooling.StandardCapabilities;
 import org.aion.avm.tooling.abi.ABICompiler;
 import org.aion.avm.tooling.deploy.JarOptimizer;
@@ -319,11 +318,7 @@ public class LocalAvmNode {
 
     public void explore(String dappAddress, PrintStream printStream) throws Exception {
 
-        try {
-            StorageWalker.walkAllStaticsForDapp(new StandardCapabilities(), printStream, kernel, Address.wrap(HexUtil.hexStringToBytes(dappAddress)));
-        } catch (Exception ex) {
-            throw new RuntimeException("Unable to explore storage for dApp : " + dappAddress, ex);
-        }
+        throw new UnsupportedOperationException("Explorer command is no longer supported.");
     }
 
     /**
