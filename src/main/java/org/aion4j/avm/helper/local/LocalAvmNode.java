@@ -10,10 +10,7 @@ import org.aion.avm.tooling.abi.ABICompiler;
 import org.aion.avm.tooling.deploy.JarOptimizer;
 import org.aion.kernel.*;
 import org.aion.types.Address;
-import org.aion.vm.api.interfaces.IExecutionLog;
-import org.aion.vm.api.interfaces.TransactionContext;
-import org.aion.vm.api.interfaces.TransactionResult;
-import org.aion.vm.api.interfaces.VirtualMachine;
+import org.aion.vm.api.interfaces.*;
 import org.aion4j.avm.helper.api.CallResponse;
 import org.aion4j.avm.helper.api.DeployResponse;
 import org.aion4j.avm.helper.exception.CallFailedException;
@@ -59,7 +56,7 @@ public class LocalAvmNode {
     public void init(String storagePath) {
         verifyStorageExists(storagePath);
         File storagePathFile = new File(storagePath);
-        kernel = new TestingKernel(storagePathFile);
+        kernel = new TestingKernel(storagePathFile, block);
 
         //Open account
         if(kernel.getBalance(defaultAddress) == null || kernel.getBalance(defaultAddress) == BigInteger.ZERO) {
@@ -100,7 +97,7 @@ public class LocalAvmNode {
             }
         }
 
-        TransactionContext txContext = createDeployTransaction(jarFilePath, deployArgsBytes, deployerAddress, BigInteger.ZERO);
+        TransactionInterface txContext = createDeployTransaction(jarFilePath, deployArgsBytes, deployerAddress, BigInteger.ZERO);
 
         DeployResponse deployResponse = createDApp(txContext);
 
@@ -125,9 +122,9 @@ public class LocalAvmNode {
             throw new CallFailedException("Method argument parsing error", e);
         }
 
-        TransactionContext txContext = createCallTransaction(contractAddress, senderAddress, method, args, value, energyLimit, energyPrice);
+        TransactionInterface txContext = createCallTransaction(contractAddress, senderAddress, method, args, value, energyLimit, energyPrice);
 
-        TransactionResult result = avm.run(kernel, new TransactionContext[]{txContext})[0].get();
+        TransactionResult result = avm.run(kernel, new TransactionInterface[]{txContext})[0].get();
 
         if(result.getResultCode().isSuccess()) {
             CallResponse response = new CallResponse();
@@ -165,7 +162,7 @@ public class LocalAvmNode {
 
             response.setEnergyUsed(((AvmTransactionResult) result).getEnergyUsed());
             response.setStatusMessage(result.getResultCode().toString());
-            printExecutionLog(txContext);
+            printExecutionLog(result.getSideEffects());
 
             return response;
         } else {
@@ -184,9 +181,9 @@ public class LocalAvmNode {
         }
     }
 
-    private void printExecutionLog(TransactionContext txContext) {
+    private void printExecutionLog(TransactionSideEffects sideEffects) {
         //Logs
-        List<IExecutionLog> executionLogs = txContext.getSideEffects().getExecutionLogs();
+        List<IExecutionLog> executionLogs = sideEffects.getExecutionLogs();
         if(executionLogs != null && executionLogs.size() > 0) {
             System.out.println("************************ Execution Logs ****************************");
 
@@ -209,9 +206,9 @@ public class LocalAvmNode {
         }
     }
 
-    private DeployResponse createDApp(TransactionContext txContext) throws DeploymentFailedException {
+    private DeployResponse createDApp(TransactionInterface txContext) throws DeploymentFailedException {
 
-        TransactionResult result = avm.run(kernel, new TransactionContext[] {txContext})[0].get();
+        TransactionResult result = avm.run(kernel, new TransactionInterface[] {txContext})[0].get();
 
         if(result.getResultCode().isSuccess()) {
             DeployResponse deployResponse = new DeployResponse();
@@ -232,7 +229,7 @@ public class LocalAvmNode {
         }
     }
 
-    private TransactionContext createDeployTransaction(String jarPath, byte[] deployArgs, Address sender, BigInteger value)
+    private TransactionInterface createDeployTransaction(String jarPath, byte[] deployArgs, Address sender, BigInteger value)
             throws DeploymentFailedException {
 
         Path path = Paths.get(jarPath);
@@ -251,7 +248,7 @@ public class LocalAvmNode {
         Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
                 value, deployBytes, energyLimit, energyPrice);
 
-        return TransactionContextImpl.forExternalTransaction(createTransaction, block);
+        return createTransaction;
 
     }
 
@@ -266,7 +263,7 @@ public class LocalAvmNode {
         return deployBytes;
     }
 
-    public TransactionContext createCallTransaction(Address contract, Address sender, String method, Object[] args,
+    public TransactionInterface createCallTransaction(Address contract, Address sender, String method, Object[] args,
                                                     BigInteger value, long energyLimit, long energyPrice) {
 
         /*if (contract.toBytes().length != Address.LENGTH){
@@ -283,8 +280,7 @@ public class LocalAvmNode {
 //        System.out.println("******** Call data: " + callData);
         BigInteger biasedNonce = kernel.getNonce(sender);//.add(BigInteger.valueOf(nonceBias));
         Transaction callTransaction = Transaction.call(sender, contract, biasedNonce, value, arguments, energyLimit, energyPrice);
-        return TransactionContextImpl.forExternalTransaction(callTransaction, block);
-
+        return callTransaction;
     }
 
     public boolean createAccountWithBalance(String address, BigInteger balance) {
