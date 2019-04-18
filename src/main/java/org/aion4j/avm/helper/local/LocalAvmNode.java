@@ -27,8 +27,6 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class LocalAvmNode {
@@ -43,6 +41,7 @@ public class LocalAvmNode {
 
     //By default doesn't do abiCompile. The deployed jar should be pre-compiled and pass to deploy.
     private boolean forceAbiCompile = false;
+    private boolean preserveDebuggability = false;
 
     public LocalAvmNode(String storagePath, String senderAddress) {
         if(storagePath.isEmpty())
@@ -70,6 +69,8 @@ public class LocalAvmNode {
         avmConfiguration.enableVerboseConcurrentExecutor=getAvmConfigurationBooleanProps(ENABLE_VERBOSE_CONCURRENT_EXECUTOR, false);
         avmConfiguration.enableVerboseContractErrors=getAvmConfigurationBooleanProps(ENABLE_VERBOSE_CONTRACT_ERRORS, false);
         avmConfiguration.preserveDebuggability=getAvmConfigurationBooleanProps(PRESERVE_DEBUGGABILITY, false);
+
+        preserveDebuggability = avmConfiguration.preserveDebuggability;
 
         avm = CommonAvmFactory.buildAvmInstanceForConfiguration(new StandardCapabilities(), avmConfiguration);
     }
@@ -243,7 +244,7 @@ public class LocalAvmNode {
         byte[] deployBytes = new CodeAndArguments(jar, deployArgs).encodeToBytes();
 
         if(this.forceAbiCompile) //do AbiCompile
-            deployBytes = compileDappBytes(deployBytes);
+            deployBytes = compileDappBytes(deployBytes, preserveDebuggability);
 
         Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
                 value, deployBytes, energyLimit, energyPrice);
@@ -252,11 +253,14 @@ public class LocalAvmNode {
 
     }
 
-    private static byte[] compileDappBytes(byte[] dappBytesWithArgs) {
-        ABICompiler compiler = new ABICompiler();
+    private static byte[] compileDappBytes(byte[] dappBytesWithArgs, boolean isDebugMode) {
+        JarOptimizer jarOptimizer = new JarOptimizer(isDebugMode);
+
         CodeAndArguments oldCodeAndArguments = CodeAndArguments.decodeFromBytes(dappBytesWithArgs);
-        compiler.compile(oldCodeAndArguments.code);
-        CodeAndArguments newCodeAndArguments = new CodeAndArguments(compiler.getJarFileBytes(),
+        ABICompiler compiler = ABICompiler.compileJarBytes(oldCodeAndArguments.code);
+        byte[] optimizedDappBytes = jarOptimizer.optimize(compiler.getJarFileBytes());
+
+        CodeAndArguments newCodeAndArguments = new CodeAndArguments(optimizedDappBytes,
                 oldCodeAndArguments.arguments);
         byte[] deployBytes = newCodeAndArguments.encodeToBytes();
 
@@ -356,7 +360,7 @@ public class LocalAvmNode {
             if(deployArgsBytes == null) deployArgsBytes = new byte[0];
 
             return Helpers.bytesToHexString(
-                    compileDappBytes(new CodeAndArguments(jar, deployArgsBytes).encodeToBytes()));
+                    compileDappBytes(new CodeAndArguments(jar, deployArgsBytes).encodeToBytes(), false)); //TODO enable debug mode later
         } catch (IOException e) {
             System.out.println(e.toString());
             return null;
@@ -419,10 +423,10 @@ public class LocalAvmNode {
      * @return
      */
     public static byte[] compileJarBytes(byte[] jarBytes) {
-        ABICompiler compiler = new ABICompiler();
-        compiler.compile(jarBytes);
+        JarOptimizer jarOptimizer = new JarOptimizer(false);
+        ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes);
 
-        return compiler.getJarFileBytes();
+        return jarOptimizer.optimize(compiler.getJarFileBytes());
     }
 
     public static byte[] optimizeJarBytes(byte[] jarBytes, boolean debugMode) {
