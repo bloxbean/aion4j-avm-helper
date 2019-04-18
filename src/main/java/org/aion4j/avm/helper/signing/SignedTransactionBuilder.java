@@ -139,7 +139,7 @@ public final class SignedTransactionBuilder {
      * @return this builder.
      */
     public SignedTransactionBuilder useAvmTransactionType() {
-        this.type = 0xf;
+        this.type = 0x2;
         return this;
     }
 
@@ -262,7 +262,7 @@ public final class SignedTransactionBuilder {
         return hexToBytes(s)[0];
     }
 
-    public static String signWithPvtKey(String pvtKey, String to, BigInteger value, String callData, BigInteger nonce, long energy, long energyPrice) throws Exception {
+    public static String signWithPvtKey(String pvtKey, String to, BigInteger value, String callData, BigInteger nonce, long energy, long energyPrice, boolean isAvmDeploy) throws Exception {
 
         if(pvtKey != null && pvtKey.startsWith("0x"))
             pvtKey = pvtKey.substring(2);
@@ -291,15 +291,28 @@ public final class SignedTransactionBuilder {
             nonce = BigInteger.ZERO;
 
         SignedTransactionBuilder builder = new SignedTransactionBuilder();
-        byte[] signedTx = builder.privateKey(pvtKey)
-                .destination(to)
-                .value(value)
-                .data(callData)
-                .senderNonce(nonce)
-                .useAvmTransactionType()
-                .energyLimit(energy)
-                .energyPrice(energyPrice)
-                .buildSignedTransaction();
+
+        byte[] signedTx = null;
+        if(isAvmDeploy) { //For avmdeploy separate type is used.
+            signedTx = builder.privateKey(pvtKey)
+                    .destination(to)
+                    .value(value)
+                    .data(callData)
+                    .senderNonce(nonce)
+                    .useAvmTransactionType()
+                    .energyLimit(energy)
+                    .energyPrice(energyPrice)
+                    .buildSignedTransaction();
+        } else {
+            signedTx = builder.privateKey(pvtKey)
+                    .destination(to)
+                    .value(value)
+                    .data(callData)
+                    .senderNonce(nonce)
+                    .energyLimit(energy)
+                    .energyPrice(energyPrice)
+                    .buildSignedTransaction();
+        }
 
         return bytesToHex(signedTx);
 
@@ -336,7 +349,7 @@ public final class SignedTransactionBuilder {
         BigInteger value = BigInteger.valueOf(45L);
         String callData = " ";
 
-        String tx = SignedTransactionBuilder.signWithPvtKey(pvtKey, to, new BigInteger("45"), "0x", null,1000, 100000);
+        String tx = SignedTransactionBuilder.signWithPvtKey(pvtKey, to, new BigInteger("45"), "0x", null,1000, 100000, false);
         System.out.println(tx);
 
     }

@@ -76,7 +76,7 @@ public class RemoteAVMNode {
             txnJo.put("from", address);
             txnJo.put("gas", gas);
             txnJo.put("gasPrice", gasPrice);
-            txnJo.put("type", "0xf");
+            txnJo.put("type", "0x2");
             txnJo.put("data", dappJarContent);
 
             paramArray.put(txnJo);
@@ -224,8 +224,17 @@ public class RemoteAVMNode {
         }
     }
 
+    //contract deploy
+    public String sendDeployRawTransaction(String destination, String privateKey, String callData, BigInteger value, long gas, long gasPrice) {
+        return sendRawTransaction(destination, privateKey, callData, value, gas, gasPrice, true);
+    }
+
     //contract transaction
     public String sendRawTransaction(String destination, String privateKey, String callData, BigInteger value, long gas, long gasPrice) {
+        return sendRawTransaction(destination, privateKey, callData, value, gas, gasPrice, false);
+    }
+
+    private String sendRawTransaction(String destination, String privateKey, String callData, BigInteger value, long gas, long gasPrice, boolean isAvmDeploy) {
         try {
 
             log.info("Signing transaction ...");
@@ -245,7 +254,7 @@ public class RemoteAVMNode {
             String signedTx = null;
             try {
                // signedTx = TxTool.signWithPvtKey(privateKey, destination, value, callData, "f", nonce, gas, gasPrice );
-                signedTx = SignedTransactionBuilder.signWithPvtKey(privateKey, destination, value, callData, nonce, gas, gasPrice);
+                signedTx = SignedTransactionBuilder.signWithPvtKey(privateKey, destination, value, callData, nonce, gas, gasPrice, isAvmDeploy);
             } catch (Exception e) {
                 //log.error("Transaction sign failed ", e);
                 throw new AVMRuntimeException("Txn signing failed ", e);
