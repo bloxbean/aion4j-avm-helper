@@ -22,6 +22,7 @@ import static org.aion4j.avm.helper.util.ConfigUtil.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
@@ -423,10 +424,35 @@ public class LocalAvmNode {
      * @return
      */
     public static byte[] compileJarBytes(byte[] jarBytes) {
-        JarOptimizer jarOptimizer = new JarOptimizer(false);
         ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes);
 
-        return jarOptimizer.optimize(compiler.getJarFileBytes());
+        return compiler.getJarFileBytes();
+    }
+
+    /**
+     * Called mainly from maven goal to compile a Jar content with ABICompiler, mainly to process annotations and write abi
+     * @param jarBytes
+     * @return
+     */
+    public static byte[] compileJarBytesAndWriteAbi(byte[] jarBytes, OutputStream output) {
+        ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes);
+        byte[] compiledBytes = compiler.getJarFileBytes();
+
+        /** Write abi file **/
+        try {
+            compiler.writeAbi(output);
+        } catch (Exception e) {
+            System.out.println("Unable to write abi file to the filesystem. " + e.getMessage());
+        } finally {
+            if(output != null) {
+                try {
+                    output.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return compiledBytes;
     }
 
     public static byte[] optimizeJarBytes(byte[] jarBytes, boolean debugMode) {

@@ -11,6 +11,8 @@ import org.junit.Test;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.Assert.*;
 
@@ -91,6 +93,37 @@ public class LocalAvmNodeTest {
 
         assertNotNull(compiledBytes);
         assertTrue(compiledBytes.length > 0);
+
+    }
+
+    @Test
+    public void compileJarBytesAndWriteAbiTest() throws Exception {
+        InputStream in = this.getClass().getResourceAsStream("/TestContract.jar");
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int len;
+
+        // read bytes from the input stream and store them in buffer
+        while ((len = in.read(buffer)) != -1) {
+            os.write(buffer, 0, len);
+        }
+
+        byte[] jarBytes = os.toByteArray();
+
+        Path abiFile = Files.createTempFile("avm", ".abi");
+
+        FileOutputStream fout = new FileOutputStream(abiFile.toFile());
+        abiFile.toFile().deleteOnExit();
+
+        byte[] compiledBytes = LocalAvmNode.compileJarBytesAndWriteAbi(jarBytes, fout);
+
+        System.out.println(abiFile.toAbsolutePath());
+
+        assertNotNull(compiledBytes);
+        assertTrue(compiledBytes.length > 0);
+        assertTrue(abiFile.toFile().exists());
 
     }
 
