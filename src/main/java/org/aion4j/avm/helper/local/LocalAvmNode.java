@@ -244,7 +244,7 @@ public class LocalAvmNode {
 
         byte[] deployBytes = new CodeAndArguments(jar, deployArgs).encodeToBytes();
 
-        if(this.forceAbiCompile) //do AbiCompile
+        if(this.forceAbiCompile) //do AbiCompile if forceAbiCompile is set. Usually you don't need to do that.
             deployBytes = compileDappBytes(deployBytes, preserveDebuggability);
 
         Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
@@ -348,7 +348,7 @@ public class LocalAvmNode {
         return ABIUtil.encodeDeploymentArguments(args);
     }
 
-    //Called for remote
+    //Called for remote to deploy a pre-compiled/final jar
     public static String getBytesForDeploy(String dappJarPath, String deployArgsStr) throws CallFailedException {
         try {
             Path path = Paths.get(dappJarPath);
@@ -360,8 +360,7 @@ public class LocalAvmNode {
 
             if(deployArgsBytes == null) deployArgsBytes = new byte[0];
 
-            return Helpers.bytesToHexString(
-                    compileDappBytes(new CodeAndArguments(jar, deployArgsBytes).encodeToBytes(), false)); //TODO enable debug mode later
+            return Helpers.bytesToHexString(new CodeAndArguments(jar, deployArgsBytes).encodeToBytes());
         } catch (IOException e) {
             System.out.println(e.toString());
             return null;
