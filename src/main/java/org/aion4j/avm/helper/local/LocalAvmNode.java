@@ -138,7 +138,7 @@ public class LocalAvmNode {
                     Object retObj = ABIUtil.decodeOneObject(retData);
 
                     if (retObj != null && retObj instanceof avm.Address) {
-                        String addStr = HexUtil.bytesToHexString(((avm.Address) retObj).unwrap());
+                        String addStr = HexUtil.bytesToHexString(((avm.Address) retObj).toByteArray());
                         response.setData(addStr);
                     } else if(retObj != null && is2DArray(retObj)) {
                         String finalRet = MethodCallArgsUtil.print2DArray(retObj);
@@ -393,7 +393,7 @@ public class LocalAvmNode {
             if(result != null) {
 
                 if (result instanceof avm.Address) {
-                    return HexUtil.bytesToHexString(((avm.Address) result).unwrap());
+                    return HexUtil.bytesToHexString(((avm.Address) result).toByteArray());
                 } else if(result != null && is2DArray(result)) {
                     String finalRet = MethodCallArgsUtil.print2DArray(result);
                     if(finalRet == null)
