@@ -2,7 +2,7 @@ package org.aion4j.avm.helper.crypto;
 
 /**
  *
- * @Author Satya
+ * @author Satya
  */
 public class AccountKey {
 

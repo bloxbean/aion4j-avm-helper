@@ -7,7 +7,7 @@ import java.security.spec.InvalidKeySpecException;
 
 /**
  *
- * @Author Satya
+ * @author Satya
  */
 public class AccountGenerator {
 

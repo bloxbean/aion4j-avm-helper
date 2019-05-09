@@ -15,7 +15,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 /**
  * Originally from https://github.com/aionnetwork/node_test_harness
  *
- * @Author Satya
+ * @author Satya
  */
 public class KeyHelper {
 
