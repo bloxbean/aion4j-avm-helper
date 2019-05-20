@@ -5,7 +5,6 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import com.mashape.unirest.request.HttpRequestWithBody;
-
 import org.aion.base.util.ByteUtil;
 import org.aion4j.avm.helper.api.Log;
 import org.aion4j.avm.helper.exception.AVMRuntimeException;
@@ -17,6 +16,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 public class RemoteAVMNode {
     //test account 0xa052de3423a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b283ca
@@ -631,7 +631,7 @@ public class RemoteAVMNode {
 
             JSONObject jo = getJsonHeader("eth_blocknumber");
             jo.put("params", Collections.EMPTY_LIST);
-            jo.put("id", 42);
+            //jo.put("id", 42);
 
             HttpResponse<JsonNode> jsonResponse = getHttpRequest()
                     .body(jo)
@@ -649,11 +649,17 @@ public class RemoteAVMNode {
 
     private JSONObject getJsonHeader(String method) {
         JSONObject jo = new JSONObject();
+        jo.put("id", generateRandomId());
         jo.put("jsonrpc", "2.0");
         jo.put("method", method);
         return jo;
     }
 
+    private String generateRandomId() {
+        Random rand = new Random();
+        int randInt = rand.nextInt(1000000);
+        return String.valueOf(randInt);
+    }
 
     private HttpRequestWithBody getHttpRequest() {
         return Unirest.post(web3RpcUrl)
