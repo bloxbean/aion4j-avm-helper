@@ -4,6 +4,7 @@ import net.i2p.crypto.eddsa.EdDSAEngine;
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
 import net.i2p.crypto.eddsa.spec.EdDSAParameterSpec;
+import org.aion.base.util.ByteUtil;
 import org.aion.rlp.RLP;
 
 import java.math.BigInteger;
@@ -336,7 +337,7 @@ public final class SignedTransactionBuilder {
         byte[] addrBytes = blake2b(publicKey);
         addrBytes [0] = hexToByte("a0");
 
-        return bytesToHex(addrBytes);
+        return ByteUtil.toHexStringWithPrefix(addrBytes);
     }
 
 
