@@ -629,7 +629,7 @@ public class RemoteAVMNode {
 
         try {
 
-            JSONObject jo = getJsonHeader("eth_blocknumber");
+            JSONObject jo = getJsonHeader("eth_blockNumber");
             jo.put("params", Collections.EMPTY_LIST);
             //jo.put("id", 42);
 
