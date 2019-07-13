@@ -1,7 +1,7 @@
 package org.aion4j.avm.helper.util;
 
 import avm.Address;
-import org.aion.avm.core.util.ABIUtil;
+import org.aion.avm.tooling.ABIUtil;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 import org.junit.Test;
 

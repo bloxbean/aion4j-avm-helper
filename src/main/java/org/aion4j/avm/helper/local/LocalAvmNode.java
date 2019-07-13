@@ -1,16 +1,19 @@
 package org.aion4j.avm.helper.local;
 
-import org.aion.avm.core.AvmConfiguration;
-import org.aion.avm.core.CommonAvmFactory;
-import org.aion.avm.core.util.ABIUtil;
-import org.aion.avm.core.util.CodeAndArguments;
+import avm.Address;
+import org.aion.avm.core.*;
 import org.aion.avm.core.util.Helpers;
-import org.aion.avm.tooling.StandardCapabilities;
+import org.aion.avm.embed.StandardCapabilities;
+import org.aion.avm.tooling.ABIUtil;
 import org.aion.avm.tooling.abi.ABICompiler;
+import org.aion.avm.tooling.abi.ABIUtils;
 import org.aion.avm.tooling.deploy.JarOptimizer;
+import org.aion.avm.userlib.CodeAndArguments;
 import org.aion.kernel.*;
-import org.aion.types.Address;
-import org.aion.vm.api.interfaces.*;
+import org.aion.types.AionAddress;
+import org.aion.types.Log;
+import org.aion.types.Transaction;
+import org.aion.types.TransactionResult;
 import org.aion4j.avm.helper.api.CallResponse;
 import org.aion4j.avm.helper.api.DeployResponse;
 import org.aion4j.avm.helper.exception.CallFailedException;
@@ -31,11 +34,11 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class LocalAvmNode {
-    private Address defaultAddress; // = KernelInterfaceImpl.PREMINED_ADDRESS;
-    Block block = new Block(new byte[32], 1, Helpers.randomAddress(), System.currentTimeMillis(), new byte[0]);
+    private AionAddress defaultAddress; // = KernelInterfaceImpl.PREMINED_ADDRESS;
+    TestingBlock block = new TestingBlock(new byte[32], 1, Helpers.randomAddress(), System.currentTimeMillis(), new byte[0]);
 
-    private  VirtualMachine avm;
-    private TestingKernel kernel;
+    private AvmImpl avm;
+    private TestingState kernel;
 
     private long energyLimit = 100000000; //TODO Needs to configured by the project
     private long energyPrice = 1L;  //TODO Needs to be configured by the project
@@ -48,7 +51,7 @@ public class LocalAvmNode {
         if(storagePath.isEmpty())
             throw new LocalAVMException("Storage path cannot be null for embedded Avm deployment");
 
-        defaultAddress = Address.wrap(Helpers.hexStringToBytes(senderAddress));
+        defaultAddress = new AionAddress(Helpers.hexStringToBytes(senderAddress));
 
         init(storagePath);
     }
@@ -56,7 +59,7 @@ public class LocalAvmNode {
     public void init(String storagePath) {
         verifyStorageExists(storagePath);
         File storagePathFile = new File(storagePath);
-        kernel = new TestingKernel(storagePathFile, block);
+        kernel = new TestingState(storagePathFile, block);
 
         //Open account
         if(kernel.getBalance(defaultAddress) == null || kernel.getBalance(defaultAddress) == BigInteger.ZERO) {
@@ -82,12 +85,12 @@ public class LocalAvmNode {
 
     public DeployResponse deploy(String jarFilePath, String deployArgs, String deployer) throws DeploymentFailedException {
 
-        Address deployerAddress = null;
+        AionAddress deployerAddress = null;
 
         if(deployer == null || deployer.isEmpty())
             deployerAddress = defaultAddress;
         else
-            deployerAddress = Address.wrap(Helpers.hexStringToBytes(deployer));
+            deployerAddress = new AionAddress(Helpers.hexStringToBytes(deployer));
 
         //parse deploy args
         byte[] deployArgsBytes = null;
@@ -99,7 +102,7 @@ public class LocalAvmNode {
             }
         }
 
-        TransactionInterface txContext = createDeployTransaction(jarFilePath, deployArgsBytes, deployerAddress, BigInteger.ZERO);
+        Transaction txContext = createDeployTransaction(jarFilePath, deployArgsBytes, deployerAddress, BigInteger.ZERO);
 
         DeployResponse deployResponse = createDApp(txContext);
 
@@ -108,14 +111,14 @@ public class LocalAvmNode {
 
     public CallResponse call(String contract, String sender, String method, String argsString, BigInteger value) throws CallFailedException {
 
-        Address contractAddress = Address.wrap(Helpers.hexStringToBytes(contract));
+        AionAddress contractAddress = new AionAddress(Helpers.hexStringToBytes(contract));
 
-        Address senderAddress = null;
+        AionAddress senderAddress = null;
 
         if(sender == null || sender.isEmpty())
             senderAddress = defaultAddress;
         else
-            senderAddress = Address.wrap(Helpers.hexStringToBytes(sender));
+            senderAddress = new AionAddress(Helpers.hexStringToBytes(sender));
 
         Object[] args = null;
         try {
@@ -124,14 +127,18 @@ public class LocalAvmNode {
             throw new CallFailedException("Method argument parsing error", e);
         }
 
-        TransactionInterface txContext = createCallTransaction(contractAddress, senderAddress, method, args, value, energyLimit, energyPrice);
+        Transaction txContext = createCallTransaction(contractAddress, senderAddress, method, args, value, energyLimit, energyPrice);
 
-        TransactionResult result = avm.run(kernel, new TransactionInterface[]{txContext})[0].get();
+        //generate block
+        this.kernel.generateBlock();
 
-        if(result.getResultCode().isSuccess()) {
+        TransactionResult result = avm.run(kernel, new Transaction[]{txContext}, ExecutionType.ASSUME_MAINCHAIN,
+                kernel.getBlockNumber()-1)[0].getResult();
+
+        if(result.transactionStatus.isSuccess()) {
             CallResponse response = new CallResponse();
 
-            byte[] retData = result.getReturnData();
+            byte[] retData = result.copyOfTransactionOutput().orElse(new byte[0]);
 
             if(retData != null) {
                 try {
@@ -162,38 +169,38 @@ public class LocalAvmNode {
                 response.setData(null);
             }
 
-            response.setEnergyUsed(((AvmTransactionResult) result).getEnergyUsed());
-            response.setStatusMessage(result.getResultCode().toString());
-            printExecutionLog(result.getSideEffects());
+            response.setEnergyUsed(result.energyUsed);
+            response.setStatusMessage(result.transactionStatus.toString());
+            printExecutionLog(result.logs);
 
             return response;
         } else {
 
-            byte[] retData = result.getReturnData();
+            byte[] retData = result.copyOfTransactionOutput().orElse(new byte[0]);
             if(retData != null) {
 
                 String resultData = Helpers.bytesToHexString(retData);
                 //failed.
                 throw new CallFailedException(String.format("Dapp call failed. Code: %s, Reason: %s",
-                        result.getResultCode().toString(), resultData));
+                        result.transactionStatus.toString(), resultData));
             } else {
                 throw new CallFailedException(String.format("Dapp call failed. Code: %s, Reason: %s",
-                        result.getResultCode().toString(), retData));
+                        result.transactionStatus.toString(), retData));
             }
         }
     }
 
-    private void printExecutionLog(TransactionSideEffects sideEffects) {
+    private void printExecutionLog(List<Log> executionLogs) {
         //Logs
-        List<IExecutionLog> executionLogs = sideEffects.getExecutionLogs();
+
         if(executionLogs != null && executionLogs.size() > 0) {
             System.out.println("************************ Execution Logs ****************************");
 
             executionLogs.forEach(exLog -> {
-                System.out.println("Hex Data: " + HexUtil.bytesToHexString(exLog.getData()));
+                System.out.println("Hex Data: " + HexUtil.bytesToHexString(exLog.copyOfData()));
 
-                if(exLog.getTopics() != null) {
-                    List<byte[]> topics = exLog.getTopics();
+                if(exLog.copyOfTopics() != null) {
+                    List<byte[]> topics = exLog.copyOfTopics();
 
                     if(topics != null) {
                         for(byte[] topic: topics) {
@@ -208,30 +215,34 @@ public class LocalAvmNode {
         }
     }
 
-    private DeployResponse createDApp(TransactionInterface txContext) throws DeploymentFailedException {
+    private DeployResponse createDApp(Transaction txContext) throws DeploymentFailedException {
 
-        TransactionResult result = avm.run(kernel, new TransactionInterface[] {txContext})[0].get();
+        //generate block
+        this.kernel.generateBlock();
 
-        if(result.getResultCode().isSuccess()) {
+        TransactionResult result = avm.run(kernel, new Transaction[] {txContext}, ExecutionType.ASSUME_MAINCHAIN,
+                kernel.getBlockNumber()-1)[0].getResult();
+
+        if(result.transactionStatus.isSuccess()) {
             DeployResponse deployResponse = new DeployResponse();
 
-            String dappAddress = Helpers.bytesToHexString(result.getReturnData());
+            String dappAddress = Helpers.bytesToHexString(result.copyOfTransactionOutput().orElse(new byte[0]));
 
             deployResponse.setAddress(dappAddress);
-            deployResponse.setEnergyUsed(((AvmTransactionResult) result).getEnergyUsed());
-            deployResponse.setStatusMessage(result.getResultCode().toString());
+            deployResponse.setEnergyUsed(result.energyUsed);
+            deployResponse.setStatusMessage(result.transactionStatus.toString());
 
             return deployResponse;
         } else {
 
-            String resultData = Helpers.bytesToHexString(result.getReturnData());
+            String resultData = Helpers.bytesToHexString(result.copyOfTransactionOutput().orElse(new byte[0]));
             //failed.
             throw new DeploymentFailedException(String.format("Dapp deployment failed. Code: %s, Reason: %s",
-                    result.getResultCode().toString(), resultData));
+                    result.transactionStatus.causeOfError, resultData));
         }
     }
 
-    private TransactionInterface createDeployTransaction(String jarPath, byte[] deployArgs, Address sender, BigInteger value)
+    private Transaction createDeployTransaction(String jarPath, byte[] deployArgs, AionAddress sender, BigInteger value)
             throws DeploymentFailedException {
 
         Path path = Paths.get(jarPath);
@@ -247,7 +258,7 @@ public class LocalAvmNode {
         if(this.forceAbiCompile) //do AbiCompile if forceAbiCompile is set. Usually you don't need to do that.
             deployBytes = compileDappBytes(deployBytes, preserveDebuggability);
 
-        Transaction createTransaction = Transaction.create(sender, kernel.getNonce(sender),
+        Transaction createTransaction = AvmTransactionUtil.create(sender, kernel.getNonce(sender),
                 value, deployBytes, energyLimit, energyPrice);
 
         return createTransaction;
@@ -268,7 +279,7 @@ public class LocalAvmNode {
         return deployBytes;
     }
 
-    public TransactionInterface createCallTransaction(Address contract, Address sender, String method, Object[] args,
+    public Transaction createCallTransaction(AionAddress contract, AionAddress sender, String method, Object[] args,
                                                     BigInteger value, long energyLimit, long energyPrice) {
 
         /*if (contract.toBytes().length != Address.LENGTH){
@@ -284,13 +295,13 @@ public class LocalAvmNode {
 //        String callData = Helpers.bytesToHexString(arguments);
 //        System.out.println("******** Call data: " + callData);
         BigInteger biasedNonce = kernel.getNonce(sender);//.add(BigInteger.valueOf(nonceBias));
-        Transaction callTransaction = Transaction.call(sender, contract, biasedNonce, value, arguments, energyLimit, energyPrice);
+        Transaction callTransaction = AvmTransactionUtil.call(sender, contract, biasedNonce, value, arguments, energyLimit, energyPrice);
         return callTransaction;
     }
 
     public boolean createAccountWithBalance(String address, BigInteger balance) {
 
-        Address account = Address.wrap(Helpers.hexStringToBytes(address));
+        AionAddress account = new AionAddress(Helpers.hexStringToBytes(address));
 
         //Open account
         if(kernel.getBalance(account) == null || kernel.getBalance(account) == BigInteger.ZERO) {
@@ -307,7 +318,7 @@ public class LocalAvmNode {
 
     public BigInteger getBalance(String address) {
 
-        Address account = Address.wrap(Helpers.hexStringToBytes(address));
+        AionAddress account = new AionAddress(Helpers.hexStringToBytes(address));
 
         BigInteger balance = kernel.getBalance(account);
 

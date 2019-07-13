@@ -1,6 +1,6 @@
 package org.aion4j.avm.helper.local;
 
-import org.aion.avm.core.util.ABIUtil;
+import org.aion.avm.tooling.ABIUtil;
 import org.aion4j.avm.helper.api.CallResponse;
 import org.aion4j.avm.helper.api.DeployResponse;
 import org.aion4j.avm.helper.exception.CallFailedException;
