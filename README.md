@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/bloxbean/aion4j-avm-helper.svg?branch=master)](https://travis-ci.org/bloxbean/aion4j-avm-helper)
 
 This library provides helper java apis to interact with embedded AVM and remote Aion kernel. 
 
