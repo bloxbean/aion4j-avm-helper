@@ -7,6 +7,16 @@ $> ./mvnw initialize
 
 $> ./mvnw clean install
 
+#### Maven Dependency
+```
+<dependency>
+  <groupId>org.aion4j</groupId>
+  <artifactId>avm-helper</artifactId>
+  <version>{version}</version>
+</dependency>
+```
+
+
 #### Projects using this library:
 
 1. [Aion4j Maven Plugin](https://github.com/bloxbean/aion4j-maven-plugin)
