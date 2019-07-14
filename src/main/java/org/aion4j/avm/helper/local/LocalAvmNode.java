@@ -170,6 +170,7 @@ public class LocalAvmNode {
             }
 
             response.setEnergyUsed(result.energyUsed);
+            response.setSuccess(true);
             response.setStatusMessage(result.transactionStatus.toString());
             printExecutionLog(result.logs);
 
@@ -181,11 +182,11 @@ public class LocalAvmNode {
 
                 String resultData = Helpers.bytesToHexString(retData);
                 //failed.
-                throw new CallFailedException(String.format("Dapp call failed. Code: %s, Reason: %s",
-                        result.transactionStatus.toString(), resultData));
+                throw new CallFailedException(String.format("Contract call failed. Cause: %s, Output: %s",
+                        result.transactionStatus.causeOfError, resultData));
             } else {
-                throw new CallFailedException(String.format("Dapp call failed. Code: %s, Reason: %s",
-                        result.transactionStatus.toString(), retData));
+                throw new CallFailedException(String.format("Contract call failed. Cause: %s, Output: %s",
+                        result.transactionStatus.causeOfError, retData));
             }
         }
     }
@@ -230,6 +231,7 @@ public class LocalAvmNode {
 
             deployResponse.setAddress(dappAddress);
             deployResponse.setEnergyUsed(result.energyUsed);
+            deployResponse.setSuccess(true);
             deployResponse.setStatusMessage(result.transactionStatus.toString());
 
             return deployResponse;
@@ -237,7 +239,7 @@ public class LocalAvmNode {
 
             String resultData = Helpers.bytesToHexString(result.copyOfTransactionOutput().orElse(new byte[0]));
             //failed.
-            throw new DeploymentFailedException(String.format("Dapp deployment failed. Code: %s, Reason: %s",
+            throw new DeploymentFailedException(String.format("Contract deployment failed. Cause: %s, Output: %s",
                     result.transactionStatus.causeOfError, resultData));
         }
     }
@@ -250,7 +252,7 @@ public class LocalAvmNode {
         try {
             jar = Files.readAllBytes(path);
         }catch (IOException e){
-            throw new DeploymentFailedException("deploy : Invalid location of Dapp jar - " + jarPath);
+            throw new DeploymentFailedException("deploy : Invalid location of contract jar - " + jarPath);
         }
 
         byte[] deployBytes = new CodeAndArguments(jar, deployArgs).encodeToBytes();

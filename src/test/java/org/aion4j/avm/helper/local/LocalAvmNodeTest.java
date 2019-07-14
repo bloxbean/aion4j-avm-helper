@@ -1,12 +1,13 @@
 package org.aion4j.avm.helper.local;
 
 import org.aion.avm.tooling.ABIUtil;
+import org.aion.avm.userlib.abi.ABIDecoder;
 import org.aion4j.avm.helper.api.CallResponse;
 import org.aion4j.avm.helper.api.DeployResponse;
 import org.aion4j.avm.helper.exception.CallFailedException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.aion4j.avm.helper.exception.DeploymentFailedException;
+import org.junit.*;
+import org.junit.rules.ExpectedException;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -15,15 +16,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public class LocalAvmNodeTest {
 
-    private String defaultAddress = "0xa092de3423a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b283ca";
-    private File testDataFolder;
+    private static String defaultAddress = "0xa092de3423a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b283ca";
+    private static File testDataFolder;
+    private static LocalAvmNode localAvmNode;
 
-    @Before
-    public void setup() throws URISyntaxException {
-        File distJar = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation()
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @BeforeClass
+    public static void setupClass() throws Exception {
+        File distJar = new File(LocalAvmNodeTest.class.getProtectionDomain().getCodeSource().getLocation()
                 .toURI());
 
         testDataFolder = new File(distJar.getParent() + File.separator + "test-data");
@@ -32,10 +39,17 @@ public class LocalAvmNodeTest {
             testDataFolder.mkdirs();
 
         testDataFolder.deleteOnExit();
+
+        localAvmNode = new LocalAvmNode(testDataFolder + File.separator + "storage", defaultAddress);
     }
 
-    @After
-    public void tearDown() {
+    @Before
+    public void setup() throws URISyntaxException {
+
+    }
+
+    @AfterClass
+    public static void tearDownClass() {
         if(testDataFolder != null)
             testDataFolder.delete();
     }
@@ -154,7 +168,6 @@ public class LocalAvmNodeTest {
 
         System.out.println("Dist folder >> " + distJar.getParent());
 
-        LocalAvmNode localAvmNode = new LocalAvmNode(testDataFolder + File.separator + "storage", defaultAddress);
        // localAvmNode.setForceAbiCompile(true);
         DeployResponse deployResponse = localAvmNode.deploy(compiledJar);
 
@@ -170,6 +183,98 @@ public class LocalAvmNodeTest {
         assertNotNull(compiledBytes);
         assertTrue(compiledBytes.length > 0);
 
+    }
+
+    @Test
+    public void deployTest() throws Exception {
+        DeployResponse deployResponse = deployTestContract(localAvmNode, "TestContract.jar", null, null);
+        String contractAddress = deployResponse.getAddress();
+
+        assertTrue(deployResponse.isSuccess());
+    }
+
+    @Test
+    public void deployFailedTest() throws Exception {
+        thrown.expect(DeploymentFailedException.class);
+        thrown.expectMessage(containsString("insufficient balance"));
+
+        String deployerWithInsufficientBalance = "0xa5555e8793a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b29999";
+        DeployResponse deployResponse = deployTestContract(localAvmNode, "TestContract.jar", null, deployerWithInsufficientBalance);
+        String contractAddress = deployResponse.getAddress();
+
+        assertFalse(deployResponse.isSuccess());
+    }
+
+
+    @Test
+    public void deployTestContractAndSetAndGetCall() throws Exception {
+
+        DeployResponse deployResponse = deployTestContract(localAvmNode, "TestContract.jar", null, null);
+        String contractAddress = deployResponse.getAddress();
+
+        String contentToSet = System.currentTimeMillis() + "";
+
+        CallResponse callResponse = localAvmNode.call(contractAddress, defaultAddress, "setString", "-T " + contentToSet, BigInteger.valueOf(50));
+        assertTrue("Set call status true", callResponse.isSuccess());
+
+        BigInteger contractBalance = localAvmNode.getBalance(contractAddress);
+        assertThat(contractBalance, equalTo(BigInteger.valueOf(50)));
+
+        CallResponse getCallResponse = localAvmNode.call(contractAddress, defaultAddress, "getString", null, BigInteger.ZERO);
+        assertTrue("Get call status true", getCallResponse.isSuccess());
+        assertThat(getCallResponse.getData(), is(contentToSet));
+    }
+
+    @Test
+    public void deployTestContractAndCallMethodWithInsufficientBalance() throws Exception {
+
+        DeployResponse deployResponse = deployTestContract(localAvmNode, "TestContract.jar", null, null);
+        String contractAddress = deployResponse.getAddress();
+
+        String caller ="0xa0115e8793a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b24397";
+
+        String contentToSet = System.currentTimeMillis() + "";
+
+        thrown.expect(CallFailedException.class);
+        thrown.expectMessage(containsString("insufficient balance"));
+
+        CallResponse callResponse = localAvmNode.call(contractAddress, caller, "setString", "-T " + contentToSet, BigInteger.valueOf(50));
+        assertFalse("Set call status false", callResponse.isSuccess());
+
+    }
+
+    private DeployResponse deployTestContract(LocalAvmNode localAvmNode, String jar, String deployArgs, String deployer) throws Exception {
+        InputStream in = this.getClass().getResourceAsStream("/" + jar);
+
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+        byte[] buffer = new byte[1024];
+        int len;
+
+        // read bytes from the input stream and store them in buffer
+        while ((len = in.read(buffer)) != -1) {
+            os.write(buffer, 0, len);
+        }
+
+        byte[] jarBytes = os.toByteArray();
+
+        byte[] compiledBytes = LocalAvmNode.compileJarBytes(jarBytes);
+
+        File distJar = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation()
+                .toURI());
+
+        String compiledJar = testDataFolder.getAbsolutePath() + File.separator + jar;
+
+        writeByte(compiledJar, compiledBytes);
+
+        System.out.println("Dist folder >> " + distJar.getParent());
+
+        if (deployer == null)
+            deployer = defaultAddress;
+
+        DeployResponse deployResponse = localAvmNode.deploy(compiledJar, deployArgs, deployer);
+
+        return deployResponse;
     }
 
     private static void writeByte(String file, byte[] bytes)
