@@ -36,7 +36,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipITs>true</skipITs>
-        <avm.version>avm-helper-avm-${version}</avm.version>
+        <avm.version>avm-helper-avm-1.4</avm.version>
     </properties>
 
     <dependencies>
