@@ -4,6 +4,7 @@ This library provides helper java apis to interact with embedded AVM and remote 
 
 #### Build from source
 $> ./mvnw initialize
+
 $> ./mvnw clean install
 
 #### Projects using this library:
