@@ -1,15 +1,14 @@
 package org.aion4j.avm.helper.local;
 
-import avm.Address;
 import org.aion.avm.core.*;
 import org.aion.avm.core.util.Helpers;
 import org.aion.avm.embed.StandardCapabilities;
 import org.aion.avm.tooling.ABIUtil;
 import org.aion.avm.tooling.abi.ABICompiler;
-import org.aion.avm.tooling.abi.ABIUtils;
-import org.aion.avm.tooling.deploy.JarOptimizer;
+import org.aion.avm.tooling.deploy.OptimizedJarBuilder;
 import org.aion.avm.userlib.CodeAndArguments;
-import org.aion.kernel.*;
+import org.aion.kernel.TestingBlock;
+import org.aion.kernel.TestingState;
 import org.aion.types.AionAddress;
 import org.aion.types.Log;
 import org.aion.types.Transaction;
@@ -21,7 +20,6 @@ import org.aion4j.avm.helper.exception.DeploymentFailedException;
 import org.aion4j.avm.helper.exception.LocalAVMException;
 import org.aion4j.avm.helper.util.HexUtil;
 import org.aion4j.avm.helper.util.MethodCallArgsUtil;
-import static org.aion4j.avm.helper.util.ConfigUtil.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +31,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.aion4j.avm.helper.util.ConfigUtil.*;
+
 public class LocalAvmNode {
+    public static final int ABI_COMPILER_VERSION = 1;
     private AionAddress defaultAddress; // = KernelInterfaceImpl.PREMINED_ADDRESS;
     TestingBlock block = new TestingBlock(new byte[32], 1, Helpers.randomAddress(), System.currentTimeMillis(), new byte[0]);
 
@@ -268,11 +269,12 @@ public class LocalAvmNode {
     }
 
     private static byte[] compileDappBytes(byte[] dappBytesWithArgs, boolean isDebugMode) {
-        JarOptimizer jarOptimizer = new JarOptimizer(isDebugMode);
-
         CodeAndArguments oldCodeAndArguments = CodeAndArguments.decodeFromBytes(dappBytesWithArgs);
-        ABICompiler compiler = ABICompiler.compileJarBytes(oldCodeAndArguments.code);
-        byte[] optimizedDappBytes = jarOptimizer.optimize(compiler.getJarFileBytes());
+        byte[] optimizedDappBytes = new OptimizedJarBuilder(isDebugMode, oldCodeAndArguments.code, ABI_COMPILER_VERSION)
+                .withUnreachableMethodRemover()
+                .withRenamer()
+                .withConstantRemover()
+                .getOptimizedBytes();
 
         CodeAndArguments newCodeAndArguments = new CodeAndArguments(optimizedDappBytes,
                 oldCodeAndArguments.arguments);
@@ -284,19 +286,9 @@ public class LocalAvmNode {
     public Transaction createCallTransaction(AionAddress contract, AionAddress sender, String method, Object[] args,
                                                     BigInteger value, long energyLimit, long energyPrice) {
 
-        /*if (contract.toBytes().length != Address.LENGTH){
-            throw env.fail("call : Invalid Dapp address ");
-        }
-
-        if (sender.toBytes().length != Address.LENGTH){
-            throw env.fail("call : Invalid sender address");
-        }*/
-
         byte[] arguments = ABIUtil.encodeMethodArguments(method, args);
 
-//        String callData = Helpers.bytesToHexString(arguments);
-//        System.out.println("******** Call data: " + callData);
-        BigInteger biasedNonce = kernel.getNonce(sender);//.add(BigInteger.valueOf(nonceBias));
+        BigInteger biasedNonce = kernel.getNonce(sender);
         Transaction callTransaction = AvmTransactionUtil.call(sender, contract, biasedNonce, value, arguments, energyLimit, energyPrice);
         return callTransaction;
     }
@@ -436,7 +428,7 @@ public class LocalAvmNode {
      * @return
      */
     public static byte[] compileJarBytes(byte[] jarBytes) {
-        ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes);
+        ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes, ABI_COMPILER_VERSION);
 
         return compiler.getJarFileBytes();
     }
@@ -447,12 +439,12 @@ public class LocalAvmNode {
      * @return
      */
     public static byte[] compileJarBytesAndWriteAbi(byte[] jarBytes, OutputStream output) {
-        ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes);
+        ABICompiler compiler = ABICompiler.compileJarBytes(jarBytes, ABI_COMPILER_VERSION);
         byte[] compiledBytes = compiler.getJarFileBytes();
 
         /** Write abi file **/
         try {
-            compiler.writeAbi(output);
+            compiler.writeAbi(output, ABI_COMPILER_VERSION);
         } catch (Exception e) {
             System.out.println("Unable to write abi file to the filesystem. " + e.getMessage());
         } finally {
@@ -468,8 +460,13 @@ public class LocalAvmNode {
     }
 
     public static byte[] optimizeJarBytes(byte[] jarBytes, boolean debugMode) {
-        JarOptimizer jarOptimizer = new JarOptimizer(debugMode);
-        return jarOptimizer.optimize(jarBytes);
+        byte[] optimizedJar = new OptimizedJarBuilder(debugMode, jarBytes, ABI_COMPILER_VERSION)
+                .withUnreachableMethodRemover()
+                .withRenamer()
+                .withConstantRemover()
+                .getOptimizedBytes();
+
+        return optimizedJar;
     }
 
     private static void verifyStorageExists(String storageRoot) {

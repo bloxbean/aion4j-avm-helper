@@ -258,14 +258,14 @@ public class LocalAvmNodeTest {
 
         byte[] jarBytes = os.toByteArray();
 
-        byte[] compiledBytes = LocalAvmNode.compileJarBytes(jarBytes);
+        byte[] optimizeJarBytes = LocalAvmNode.optimizeJarBytes(jarBytes, false);
 
         File distJar = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation()
                 .toURI());
 
         String compiledJar = testDataFolder.getAbsolutePath() + File.separator + jar;
 
-        writeByte(compiledJar, compiledBytes);
+        writeByte(compiledJar, optimizeJarBytes);
 
         System.out.println("Dist folder >> " + distJar.getParent());
 
@@ -275,6 +275,21 @@ public class LocalAvmNodeTest {
         DeployResponse deployResponse = localAvmNode.deploy(compiledJar, deployArgs, deployer);
 
         return deployResponse;
+    }
+
+    @Test
+    public void createAccountWithBalanceTest() {
+
+        String address = "a0458c209555006804064bd488c16d5219179c90c3955caa04e3a1102f3ce7b2";
+        BigInteger balance = BigInteger.valueOf(500).multiply(BigInteger.valueOf(1000000000000000000L));
+        localAvmNode.createAccountWithBalance(address, balance);
+
+        BigInteger currBalance = localAvmNode.getBalance(address);
+
+        System.out.println("Expected Balance >>> " + balance.toString());
+        System.out.println("Current Balance >>> " + currBalance.toString());
+
+        assertThat(currBalance, equalTo(balance));
     }
 
     private static void writeByte(String file, byte[] bytes)
