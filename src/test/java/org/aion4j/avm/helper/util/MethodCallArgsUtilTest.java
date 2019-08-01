@@ -5,6 +5,8 @@ import org.aion.avm.tooling.ABIUtil;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 import org.junit.Test;
 
+import java.math.BigInteger;
+
 import static org.junit.Assert.*;
 
 public class MethodCallArgsUtilTest {
@@ -41,11 +43,11 @@ public class MethodCallArgsUtilTest {
     @Test
     public void parseMethodArgsArray() throws Exception {
 
-        String argsStr = "-A 0xa0c40d2bb3e0248b16f4f1bd5735dc22cd84b580bbc301f8cebc83e25030c6ea 0xa0c5122bb3e0248b16f4f1bd5735dc22cd84b580bbc301f8cebc83e25030c3ad -J 100 -I 45 -B 1 -T hello 'My name is John' -I 9";
+        String argsStr = "-A 0xa0c40d2bb3e0248b16f4f1bd5735dc22cd84b580bbc301f8cebc83e25030c6ea 0xa0c5122bb3e0248b16f4f1bd5735dc22cd84b580bbc301f8cebc83e25030c3ad -J 100 -I 45 -B 1 -T hello 'My name is John' -I 9 -K 5000000000000000000000";
 
         Object[] objects = MethodCallArgsUtil.parseMethodArgs(argsStr);
 
-        assertEquals(6, objects.length);
+        assertEquals(7, objects.length);
         assertTrue(((Object [])(objects[0]))[0]  instanceof  Address);
         assertTrue(((Object [])(objects[0]))[1]  instanceof  Address);
 
@@ -54,6 +56,9 @@ public class MethodCallArgsUtilTest {
 
         assertEquals("My name is John", ((Object [])(objects[4]))[1]);
         assertEquals(9, objects[5]);
+
+        assertTrue(objects[6] instanceof BigInteger);
+        assertEquals(new BigInteger("5000000000000000000000"), objects[6]);
     }
 
     @Test
@@ -78,7 +83,9 @@ public class MethodCallArgsUtilTest {
                 "-F 1.2 3.4 " +
                 "-D 1.2 2.1  " +
                 "-Z true false " +
-                "-B 1 2";
+                "-B 1 2 " +
+                "-K 900000000000000000000 567900000000000098 8900000000000087665544 " +
+                "-I 655 9555 ";
 
         Object[] args = MethodCallArgsUtil.parseMethodArgs(argStr);
         byte[] arguments = ABIUtil.encodeMethodArguments("testArray", args);
@@ -92,6 +99,10 @@ public class MethodCallArgsUtilTest {
         assertEquals(false, ((boolean[])args[7])[1]);
 
         assertEquals(2, ((byte[])args[8])[1]);
+
+        assertEquals(new BigInteger("900000000000000000000"), ((BigInteger[])args[9])[0] );
+        assertEquals(new BigInteger("567900000000000098"), ((BigInteger[])args[9])[1] );
+        assertEquals(new BigInteger("8900000000000087665544"), ((BigInteger[])args[9])[2] );
 
     }
 
@@ -167,7 +178,8 @@ public class MethodCallArgsUtilTest {
                 "-S[][] '4 5' '9 10' " +
                 "-F[][] '1.2 3.2' '4.5 9.8' '6.5 77.0' " +
                 "-D[][] '1000.1 40000'  800000 '40000 78000' " +
-                "-B[][] '1 1' '0 1' ";
+                "-B[][] '1 1' '0 1' " +
+                "-K[][] '500000000000000 78900000000900000000' '877780000000000000000 445555333333333333'";
 
         Object[] objects = MethodCallArgsUtil.parseMethodArgs(argStr);
 
@@ -201,6 +213,11 @@ public class MethodCallArgsUtilTest {
 
         assertEquals(1, ((byte[][]) objects[11])[1][1]);
         assertEquals(1, ((byte[][]) objects[11])[0][1]);
+
+        assertEquals(new BigInteger("500000000000000"), ((BigInteger[][]) objects[12])[0][0]);
+        assertEquals(new BigInteger("78900000000900000000"), ((BigInteger[][]) objects[12])[0][1]);
+        assertEquals(new BigInteger("877780000000000000000"), ((BigInteger[][]) objects[12])[1][0]);
+        assertEquals(new BigInteger("445555333333333333"), ((BigInteger[][]) objects[12])[1][1]);
     }
 
     @Test
@@ -223,5 +240,34 @@ public class MethodCallArgsUtilTest {
         assertEquals(6, ((int[][]) objects[1])[1][0]);
         assertEquals(7, ((int[][]) objects[1])[1][1]);
 
+    }
+
+    @Test
+    public void testPrint1DArrayBigInteger() {
+        BigInteger[] bigIntegers = new BigInteger[]{new BigInteger("788399999993434834783748374"),
+                new BigInteger("2392739273927392739223"), new BigInteger("1251725172517251725172512")};
+
+        String printRes = MethodCallArgsUtil.printArray(bigIntegers);
+
+        assertEquals("[788399999993434834783748374, 2392739273927392739223, 1251725172517251725172512]", printRes.trim());
+
+        System.out.println(printRes);
+    }
+
+    @Test
+    public void testPrint2DArrayBigInteger() {
+        BigInteger[][] bigIntegers = new BigInteger[][]{
+                {new BigInteger("788399999993434834783748374"),
+                new BigInteger("2392739273927392739223"), new BigInteger("1251725172517251725172512")},
+                {new BigInteger("424242342342342342342"),
+                        new BigInteger("454545454545454545454656"), new BigInteger("00095545343434343111111111111")}
+                };
+
+        String printRes = MethodCallArgsUtil.print2DArray(bigIntegers);
+
+        assertEquals("[788399999993434834783748374, 2392739273927392739223, 1251725172517251725172512]\n" +
+                "[424242342342342342342, 454545454545454545454656, 95545343434343111111111111]", printRes.trim());
+
+        System.out.println(printRes);
     }
 }

@@ -4,6 +4,7 @@ import avm.Address;
 import org.aion.avm.core.util.Helpers;
 import org.aion4j.avm.helper.exception.MethodArgsParseException;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -103,6 +104,7 @@ public class MethodCallArgsUtil {
         if(type != null) {
             if(type.startsWith("-I")) return Integer.parseInt(token);
             else if(type.startsWith("-J")) return Long.valueOf(token);
+            else if(type.startsWith("-K")) return new BigInteger(token);
             else if(type.startsWith("-S")) return Short.valueOf(token);
             else if(type.startsWith("-C")) return Character.valueOf(token.charAt(0));
             else if(type.startsWith("-F")) return Float.valueOf(token);
@@ -124,6 +126,9 @@ public class MethodCallArgsUtil {
         }
         else if(type.startsWith("-J")) {
             return toLongArray(list);
+        }
+        else if(type.startsWith("-K")) {
+            return toBigIntegerArray(list);
         }
         else if(type.startsWith("-S")) {
             return toShortArray(list);
@@ -210,6 +215,8 @@ public class MethodCallArgsUtil {
            return new int[rows][cols];
         } else if (type.startsWith("-J[][]")) {
             return new long[rows][cols];
+        } else if (type.startsWith("-K[][]")) {
+            return new BigInteger[rows][cols];
         } else if (type.startsWith("-S[][]")) {
             return new short[rows][cols];
         } else if (type.startsWith("-C[][]")) {
@@ -236,6 +243,8 @@ public class MethodCallArgsUtil {
             ((int[][])arr)[row][col] = (int)value;
         } else if (type.startsWith("-J[][]")) {
             ((long[][])arr)[row][col] = (long)value;
+        } else if (type.startsWith("-K[][]")) {
+            ((BigInteger[][])arr)[row][col] = (BigInteger)value;
         } else if (type.startsWith("-S[][]")) {
             ((short[][])arr)[row][col] = (short)value;
         } else if (type.startsWith("-C[][]")) {
@@ -383,6 +392,7 @@ public class MethodCallArgsUtil {
         switch (token) {
             case "-I":
             case "-J":
+            case "-K":
             case "-S":
             case "-C":
             case "-F":
@@ -393,6 +403,7 @@ public class MethodCallArgsUtil {
             case "-T":
             case "-I[]":
             case "-J[]":
+            case "-K[]":
             case "-S[]":
             case "-C[]":
             case "-F[]":
@@ -403,6 +414,7 @@ public class MethodCallArgsUtil {
             case "-T[]":
             case "-I[][]":
             case "-J[][]":
+            case "-K[][]":
             case "-S[][]":
             case "-C[][]":
             case "-F[][]":
@@ -429,6 +441,14 @@ public class MethodCallArgsUtil {
         long[] ret = new long[list.size()];
         int i = 0;
         for (Long e : list)
+            ret[i++] = e;
+        return ret;
+    }
+
+    private static BigInteger[] toBigIntegerArray(List<BigInteger> list)  {
+        BigInteger[] ret = new BigInteger[list.size()];
+        int i = 0;
+        for (BigInteger e : list)
             ret[i++] = e;
         return ret;
     }
@@ -508,7 +528,10 @@ public class MethodCallArgsUtil {
         } else if (clazz == long[][].class) {
             long[][] arr = (long[][])data;
             return print2Darray(arr);
-        } else if (clazz == float[][].class) {
+        } else if (clazz == BigInteger[][].class) {
+            BigInteger[][] arr = (BigInteger[][])data;
+            return print2Darray(arr);
+        }  else if (clazz == float[][].class) {
             float[][] arr = (float[][]) data;
             return print2Darray(arr);
         } else if (clazz == double[][].class) {
@@ -539,6 +562,9 @@ public class MethodCallArgsUtil {
             return Arrays.toString(arr);
         } else if (clazz == long[].class) {
             long[] arr = (long[])data;
+            return Arrays.toString(arr);
+        } else if (clazz == BigInteger[].class) {
+            BigInteger[] arr = (BigInteger[])data;
             return Arrays.toString(arr);
         } else if (clazz == float[].class) {
             float[] arr = (float[]) data;
@@ -620,6 +646,19 @@ public class MethodCallArgsUtil {
         return sb.toString();
     }
 
+    private static String print2Darray(BigInteger[][] objs) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        sb.append("\n");
+
+        for(BigInteger[] arr: objs) {
+            sb.append(Arrays.toString(arr));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
     private static String print2Darray(char[][] objs) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
@@ -662,7 +701,7 @@ public class MethodCallArgsUtil {
 
     public static void main(String[] args) throws Exception {
 
-        String argsStr = "-A 0x1122334455667788112233445566778811223344556677881122334455667788 -J 100 -I 45 -B -1 -T hello";
+        String argsStr = "-A 0x1122334455667788112233445566778811223344556677881122334455667788 -J 100 -I 45 -B -1 -T hello -K 50000000000000000000000";
 
         Object[] objs = parseMethodArgs(argsStr);
 
