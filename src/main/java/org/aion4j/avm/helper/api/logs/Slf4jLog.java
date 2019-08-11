@@ -2,12 +2,17 @@ package org.aion4j.avm.helper.api.logs;
 
 import org.aion4j.avm.helper.api.Log;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Slf4jLog implements Log {
     private Logger logger;
 
-    public Slf4jLog(Logger logger) {
-        this.logger = logger;
+    public Slf4jLog(Logger log) {
+        this.logger = log;
+    }
+
+    public Slf4jLog(Class clazz) {
+        this.logger = LoggerFactory.getLogger(clazz);
     }
 
     @Override
