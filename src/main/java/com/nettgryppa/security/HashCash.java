@@ -287,8 +287,11 @@ public class HashCash implements Comparable<HashCash> {
             md.update(temp.getBytes());
             bArray = md.digest();
             tempValue = numberOfLeadingZeros(bArray);
+            if(counter % 300000 == 0)
+                System.out.print(".");
         } while ( tempValue < value);
 
+        System.out.println("Done");
         return temp;
     }
 
