@@ -15,6 +15,7 @@ import org.aion4j.avm.helper.faucet.model.Challenge;
 import org.aion4j.avm.helper.faucet.model.TopupResult;
 import org.aion4j.avm.helper.remote.RemoteAVMNode;
 import org.aion4j.avm.helper.remote.RemoteAvmAdapter;
+import org.aion4j.avm.helper.util.CryptoUtil;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -114,7 +115,10 @@ public class FaucetService {
             throw new RemoteAvmCallException("Topup registration failed for address : " + account);
         }
 
-        log.info("New balance: " + balance);
+        Double aionBalance = CryptoUtil.convertAmpToAion(balance);
+
+        log.info("Account           : " + account);
+        log.info(String.format("New balance (nAmp): %s (%s Aion)", balance, String.format("%.12f",aionBalance)));
 
         return;
     }
