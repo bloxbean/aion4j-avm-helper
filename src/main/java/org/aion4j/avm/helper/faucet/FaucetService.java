@@ -16,6 +16,7 @@ import org.aion4j.avm.helper.faucet.model.TopupResult;
 import org.aion4j.avm.helper.remote.RemoteAVMNode;
 import org.aion4j.avm.helper.remote.RemoteAvmAdapter;
 import org.aion4j.avm.helper.util.CryptoUtil;
+import org.aion4j.avm.helper.util.StringUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -148,6 +149,12 @@ public class FaucetService {
         extensions.put("data", extensionList);
 
         log.info("Start genereting proof with value " + challenge.getValue());
+
+        if(challenge.getValue() > 30) {
+            log.info("You may be making too many requests to the faucet. " +
+                    "Your challenge is too high. It might take little longer to generate the proof.");
+        }
+
         //Start minting hashcash
         long t1 = System.currentTimeMillis();
         HashCash cash = null;
@@ -183,6 +190,9 @@ public class FaucetService {
             throw new RemoteAvmCallException("Topup failed for address : " + account);
         }
 
+        if(topupResult != null && StringUtils.isEmpty(topupResult.getTxHash())) {
+            throw new RemoteAvmCallException("Topup transaction failed. Something is wrong.");
+        }
 
         //Let's try to get receipt
         remoteAvmAdapter.startGetReceipt(topupResult.getTxHash(), "tail", "silent", null, log);
