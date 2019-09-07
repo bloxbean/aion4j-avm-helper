@@ -81,10 +81,14 @@ public class LocalAvmNode {
     }
 
     public DeployResponse deploy(String jarFilePath) throws DeploymentFailedException {
-        return deploy(jarFilePath, null, null);
+        return deploy(jarFilePath, null, null, BigInteger.ZERO);
     }
 
     public DeployResponse deploy(String jarFilePath, String deployArgs, String deployer) throws DeploymentFailedException {
+        return deploy(jarFilePath, deployArgs, deployer, BigInteger.ZERO);
+    }
+
+    public DeployResponse deploy(String jarFilePath, String deployArgs, String deployer, BigInteger value) throws DeploymentFailedException {
 
         AionAddress deployerAddress = null;
 
@@ -103,7 +107,10 @@ public class LocalAvmNode {
             }
         }
 
-        Transaction txContext = createDeployTransaction(jarFilePath, deployArgsBytes, deployerAddress, BigInteger.ZERO);
+        if(value == null)
+            value = BigInteger.ZERO;
+
+        Transaction txContext = createDeployTransaction(jarFilePath, deployArgsBytes, deployerAddress, value);
 
         DeployResponse deployResponse = createDApp(txContext);
 
@@ -308,6 +315,24 @@ public class LocalAvmNode {
             System.out.println("Account already exists");
             return false;
         }
+    }
+
+    /**
+     * Transfer amount to the target address
+     * @param toAddress
+     * @param amount
+     * @return
+     */
+    public boolean transfer(String toAddress, BigInteger amount) {
+
+        AionAddress account = new AionAddress(Helpers.hexStringToBytes(toAddress));
+
+        if(kernel.getBalance(account) == null) {
+            kernel.createAccount(account);
+        }
+
+        kernel.adjustBalance(account, amount);
+        return true;
     }
 
     public BigInteger getBalance(String address) {

@@ -51,7 +51,7 @@ public class LocalAvmNodeTest {
     @AfterClass
     public static void tearDownClass() {
         if(testDataFolder != null)
-            testDataFolder.delete();
+            deleteDirectory(testDataFolder);
     }
 
     @Test
@@ -194,6 +194,17 @@ public class LocalAvmNodeTest {
     }
 
     @Test
+    public void deployTestWithValue() throws Exception {
+        DeployResponse deployResponse = deployTestContract(localAvmNode, "TestContract.jar", null, null, new BigInteger("670000000000"));
+        String contractAddress = deployResponse.getAddress();
+
+        BigInteger contractBalance = localAvmNode.getBalance(contractAddress);
+
+        assertTrue(deployResponse.isSuccess());
+        assertEquals(new BigInteger("670000000000"), contractBalance);
+    }
+
+    @Test
     public void deployFailedTest() throws Exception {
         thrown.expect(DeploymentFailedException.class);
         thrown.expectMessage(containsString("insufficient balance"));
@@ -243,7 +254,39 @@ public class LocalAvmNodeTest {
 
     }
 
+    @Test
+    public void transferTest() throws Exception {
+
+        String toAddress = "0xa0115e8793a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b24396";
+        BigInteger initialBalance = new BigInteger("40000000000");
+
+        localAvmNode.createAccountWithBalance(toAddress, initialBalance);
+
+        assertEquals(initialBalance, localAvmNode.getBalance(toAddress));
+
+        BigInteger transferAmt = new BigInteger("500");
+        localAvmNode.transfer(toAddress, transferAmt);
+        System.out.println(localAvmNode.getBalance(toAddress));
+
+        assertEquals(initialBalance.add(transferAmt), localAvmNode.getBalance(toAddress));
+    }
+
+    @Test
+    public void tranferTestWithoutAccountCreate() {
+        String toAddress = "0xa0885e8793a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b24396";
+
+        BigInteger transferAmt = new BigInteger("500");
+        localAvmNode.transfer(toAddress, transferAmt);
+        System.out.println(localAvmNode.getBalance(toAddress));
+
+        assertEquals(transferAmt, localAvmNode.getBalance(toAddress));
+    }
+
     private DeployResponse deployTestContract(LocalAvmNode localAvmNode, String jar, String deployArgs, String deployer) throws Exception {
+        return deployTestContract(localAvmNode, jar, deployArgs, deployer, null);
+    }
+
+    private DeployResponse deployTestContract(LocalAvmNode localAvmNode, String jar, String deployArgs, String deployer, BigInteger value) throws Exception {
         InputStream in = this.getClass().getResourceAsStream("/" + jar);
 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -272,7 +315,7 @@ public class LocalAvmNodeTest {
         if (deployer == null)
             deployer = defaultAddress;
 
-        DeployResponse deployResponse = localAvmNode.deploy(compiledJar, deployArgs, deployer);
+        DeployResponse deployResponse = localAvmNode.deploy(compiledJar, deployArgs, deployer, value);
 
         return deployResponse;
     }
@@ -311,5 +354,15 @@ public class LocalAvmNodeTest {
         catch (Exception e) {
             System.out.println("Exception: " + e);
         }
+    }
+
+    private static boolean deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        return directoryToBeDeleted.delete();
     }
 }
