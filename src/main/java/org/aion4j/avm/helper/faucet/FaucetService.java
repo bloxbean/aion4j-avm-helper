@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -116,7 +117,7 @@ public class FaucetService {
             throw new RemoteAvmCallException("Topup registration failed for address : " + account);
         }
 
-        Double aionBalance = CryptoUtil.convertAmpToAion(balance);
+        BigDecimal aionBalance = CryptoUtil.ampToAion(balance);
 
         log.info("Account           : " + account);
         log.info(String.format("New balance (nAmp): %s (%s Aion)", balance, String.format("%.12f",aionBalance)));

@@ -34,6 +34,7 @@ import java.util.List;
 import static org.aion4j.avm.helper.util.ConfigUtil.*;
 
 public class LocalAvmNode {
+    private static final BigInteger ONE_AION = new BigInteger("1000000000000000000"); //1 Aion
     public static final int ABI_COMPILER_VERSION = 1;
     private AionAddress defaultAddress; // = KernelInterfaceImpl.PREMINED_ADDRESS;
     TestingBlock block = new TestingBlock(new byte[32], 1, Helpers.randomAddress(), System.currentTimeMillis(), new byte[0]);
@@ -43,7 +44,6 @@ public class LocalAvmNode {
 
     private long energyLimit = 100000000; //TODO Needs to configured by the project
     private long energyPrice = 1L;  //TODO Needs to be configured by the project
-
     //By default doesn't do abiCompile. The deployed jar should be pre-compiled and pass to deploy.
     private boolean forceAbiCompile = false;
     private boolean preserveDebuggability = false;
@@ -64,10 +64,12 @@ public class LocalAvmNode {
 
         //Open account
         if(kernel.getBalance(defaultAddress) == null || kernel.getBalance(defaultAddress) == BigInteger.ZERO) {
-            kernel.createAccount(defaultAddress);
-            kernel.adjustBalance(defaultAddress, BigInteger.valueOf(100000000000000L));
+            BigInteger initialBalance = ONE_AION.multiply(new BigInteger("100000")); //100,000 Aion
 
-            System.out.println(String.format("Created default account %s with balance %s", defaultAddress, BigInteger.valueOf(100000000000000L) ));
+            kernel.createAccount(defaultAddress);
+            kernel.adjustBalance(defaultAddress, initialBalance);
+
+            System.out.println(String.format("Created default account %s with balance %s", defaultAddress, initialBalance ));
         }
 
         AvmConfiguration avmConfiguration = new AvmConfiguration();
