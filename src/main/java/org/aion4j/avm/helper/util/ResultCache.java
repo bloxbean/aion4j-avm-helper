@@ -9,6 +9,7 @@ public class ResultCache {
 
     public static String DEPLOY_ADDRESS = "deploy.address";
     public static String DEPLOY_TX_RECEIPT = "deploy.tx.receipt";
+    public static String LAST_DEPLOY_DEBUG_ENABLE = "last.deploy.debug.enabled";
     public static String TX_RECEIPT = "last.tx.receipt";
 
     private String projectName;
@@ -21,12 +22,20 @@ public class ResultCache {
 
     public void updateDeployAddress(String address) {
         updateProperty(DEPLOY_ADDRESS, address);
+
+        //update debug enabled or not
+        boolean debugEnabled = ConfigUtil.getAvmConfigurationBooleanProps(ConfigUtil.PRESERVE_DEBUGGABILITY, false);
+        updateDebugEnabledInLastDeploy(debugEnabled);
     }
 
     public void updateDeployTxnReceipt(String txHash) {
         updateProperty(DEPLOY_TX_RECEIPT, txHash);
         updateProperty(TX_RECEIPT, txHash); //also set lastTxn receipt
         updateProperty(DEPLOY_ADDRESS, ""); //reset deploy address as it's a new deployment.
+    }
+
+    private void updateDebugEnabledInLastDeploy(boolean flag) {
+        updateProperty(LAST_DEPLOY_DEBUG_ENABLE, String.valueOf(flag));
     }
 
     public void updateTxnReceipt(String txHash) {
@@ -50,6 +59,14 @@ public class ResultCache {
 
     public String getLastDeployTxnReceipt() {
         return getPropertyValue(DEPLOY_TX_RECEIPT);
+    }
+
+    public boolean getDebugEnabledInLastDeploy() {
+        String flag = getPropertyValue(LAST_DEPLOY_DEBUG_ENABLE);
+        if(StringUtils.isEmpty(flag))
+            return false;
+        else
+            return Boolean.parseBoolean(flag);
     }
 
     public String getLastTxnReceipt() {
