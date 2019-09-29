@@ -21,15 +21,15 @@ pipeline {
 
         stage('Build') {
             steps {
-                 sh  'mvn initialize'
-                 sh  'mvn clean package'
+                 sh  './mvnw initialize'
+                 sh  './mvnw clean package'
             }
         }
 
         stage('Unit Tests') {
             steps {
 
-                sh 'mvn -B test'
+                sh './mvnw -B test'
 
             }
             post {
@@ -42,7 +42,7 @@ pipeline {
         stage('Integration Tests') {
             steps {
 
-                sh 'mvn -B integration-test'
+                sh './mvnw -B integration-test'
 
             }
 //            post {
@@ -60,7 +60,7 @@ pipeline {
                 configFileProvider(
                         [configFile(fileId: 'maven-settings', variable: 'MAVEN_SETTINGS')]) {
 
-                    sh 'mvn -s "$MAVEN_SETTINGS" clean deploy -Dgpg.passphrase=${gpg_passphrase} -DskipITs -Prelease'
+                    sh './mvnw -s "$MAVEN_SETTINGS" clean deploy -Dgpg.passphrase=${gpg_passphrase} -DskipITs -Prelease'
 
                 }
             }
@@ -79,14 +79,14 @@ pipeline {
                         git config --global user.name Jenkins
                        """
 
-                    sh 'mvn -s "$MAVEN_SETTINGS" release:clean release:prepare release:perform -Darguments=-Dgpg.passphrase=${gpg_passphrase} -DskipITs -Prelease'
+                    sh './mvnw -s "$MAVEN_SETTINGS" release:clean release:prepare release:perform -Darguments=-Dgpg.passphrase=${gpg_passphrase} -DskipITs -Prelease'
                 }
             }
             post {
                 success {
                     echo "Publish to Sonatype repository"
                     dir("target/checkout") {
-                        sh 'mvn nexus-staging:release -Prelease'
+                        sh './mvnw nexus-staging:release -Prelease'
                     }
                 }
             }
