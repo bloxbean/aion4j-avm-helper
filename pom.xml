@@ -27,7 +27,7 @@
         <url>https://github.com/bloxbean/aion4j-avm-helper/</url>
         <connection>scm:git:git@github.com:bloxbean/aion4j-avm-helper.git</connection>
         <developerConnection>scm:git:git@github.com:bloxbean/aion4j-avm-helper.git</developerConnection>
-        <tag>avm-helper-0.7.4</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
