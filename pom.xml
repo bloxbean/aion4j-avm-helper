@@ -4,7 +4,7 @@
 
     <groupId>org.aion4j</groupId>
     <artifactId>avm-helper</artifactId>
-    <version>0.7.7-SNAPSHOT</version>
+    <version>0.7.4-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>aion4j-avm-helper</name>
     <description>Aion4j helper library for AVM (Aion Virtual Machine)</description>
