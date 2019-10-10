@@ -34,6 +34,22 @@ public class AccountCacheTest {
     }
 
     @Test
+    public void testKeyFileExists() {
+        Account account1 = new Account("a-address", "a-privatekey");
+        Account account2 = new Account("b-address", "b-privatekey");
+
+        GlobalCache globalCache = new GlobalCache(targetFolder, new Slf4jLog(AccountCacheTest.class));
+        AccountCache accountCache = globalCache.getAccountCache();
+
+        accountCache.addAccount(account1);
+        accountCache.addAccount(account2);
+        globalCache.setAccountCache(accountCache);
+
+        Assert.assertTrue(new File(targetFolder, ".aion4j.account.conf").exists());
+        Assert.assertTrue(new File(targetFolder, ".aion4j.account.conf.key").exists());
+    }
+
+    @Test
     public void testAddAccount() {
         Account account1 = new Account("a-address", "a-privatekey");
         Account account2 = new Account("b-address", "b-privatekey");
@@ -59,6 +75,7 @@ public class AccountCacheTest {
 
         //Read now
         accountCache = globalCache.getAccountCache();
+
 
         Assert.assertEquals(3, accountCache.getAccounts().size());
         Assert.assertEquals(account1, accountCache.getAccounts().get(0));
