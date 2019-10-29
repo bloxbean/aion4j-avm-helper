@@ -4,7 +4,7 @@
 
     <groupId>org.aion4j</groupId>
     <artifactId>avm-helper</artifactId>
-    <version>0.7.10-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>aion4j-avm-helper</name>
     <description>Aion4j helper library for AVM (Aion Virtual Machine)</description>
@@ -36,7 +36,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipITs>true</skipITs>
-        <avm.version>avm-helper-avm-1.4</avm.version>
+        <avm.version>avm-helper-avm-2.0</avm.version>
     </properties>
 
     <dependencies>
