@@ -2,7 +2,6 @@ package org.aion4j.avm.helper.local;
 
 import org.aion.avm.core.*;
 import org.aion.avm.core.util.Helpers;
-import org.aion.avm.embed.StandardCapabilities;
 import org.aion.avm.tooling.ABIUtil;
 import org.aion.avm.tooling.abi.ABICompiler;
 import org.aion.avm.tooling.deploy.OptimizedJarBuilder;
@@ -79,7 +78,7 @@ public class LocalAvmNode {
 
         preserveDebuggability = avmConfiguration.preserveDebuggability;
 
-        avm = CommonAvmFactory.buildAvmInstanceForConfiguration(new StandardCapabilities(), avmConfiguration);
+        avm = CommonAvmFactory.buildAvmInstanceForConfiguration(new TestStandardCapabilities(), avmConfiguration);
     }
 
     public DeployResponse deploy(String jarFilePath) throws DeploymentFailedException {

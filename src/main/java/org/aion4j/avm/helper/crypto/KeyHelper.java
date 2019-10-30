@@ -82,7 +82,7 @@ public class KeyHelper {
         return Utils.hexToBytes(skEncoded);
     }
 
-    private static byte[] computeA0Address(byte[] publicKey) {
+    public static byte[] computeA0Address(byte[] publicKey) {
         byte A0_IDENTIFIER = (byte) 0xa0;
         ByteBuffer buf = ByteBuffer.allocate(32);
         buf.put(A0_IDENTIFIER);

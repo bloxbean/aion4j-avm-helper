@@ -252,7 +252,12 @@ public final class SignedTransactionBuilder {
         return digest.digest();
     }
 
-    private static byte[] sign(EdDSAPrivateKey privateKey, byte[] data) throws InvalidKeyException, SignatureException, NoSuchAlgorithmException {
+    public static EdDSAPrivateKey getEDSAPrivateKey(String privateKey) throws InvalidKeySpecException {
+        EdDSAPrivateKey key = new EdDSAPrivateKey(new PKCS8EncodedKeySpec(addSkPrefix(privateKey)));
+        return key;
+    }
+
+    public static byte[] sign(EdDSAPrivateKey privateKey, byte[] data) throws InvalidKeyException, SignatureException, NoSuchAlgorithmException {
         EdDSAParameterSpec spec = EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519);
         EdDSAEngine edDSAEngine = new EdDSAEngine(MessageDigest.getInstance(spec.getHashAlgorithm()));
         edDSAEngine.initSign(privateKey);
