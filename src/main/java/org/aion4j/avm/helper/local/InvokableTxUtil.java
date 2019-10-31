@@ -1,4 +1,4 @@
-package org.aion4j.avm.helper.metatxn;
+package org.aion4j.avm.helper.local;
 
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
 import org.aion.avm.embed.crypto.CryptoUtil;
@@ -12,8 +12,7 @@ import org.aion.types.InternalTransaction.RejectedStatus;
 import org.aion4j.avm.helper.crypto.KeyHelper;
 import org.aion4j.avm.helper.signing.Blake2b;
 import org.aion4j.avm.helper.signing.SignedTransactionBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.aion4j.avm.helper.util.HexUtil;
 
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -29,7 +28,6 @@ import java.util.Arrays;
 public class InvokableTxUtil {
 
     private static final byte VERSION = 0;
-    private static final Logger LOG = LoggerFactory.getLogger(InvokableTxUtil.class);
     private static AionAddress ZERO_ADDRESS = new AionAddress(new byte[32]);
 
     private static final int
@@ -127,6 +125,9 @@ public class InvokableTxUtil {
         // Verify the executor
 
         if (executor != null && !executor.equals(ZERO_ADDRESS) && !executor.equals(callingAddress)) {
+            System.err.println("Invokable tx -> executor address is not matching calling address.");
+            System.err.println("Invokable tx -> executor address: " + executor.toString());
+            System.err.println("Invokable tx -> calling address: " + callingAddress != null? callingAddress.toString(): null);
             return null;
         }
 
@@ -162,7 +163,8 @@ public class InvokableTxUtil {
                     encodingWithVersion);
         }
         catch (Exception e) {
-            LOG.error("Invokable tx -> unable to decode rlpEncoding. " + e);
+            e.printStackTrace();
+            System.err.println("Invokable tx -> unable to decode rlpEncoding. " + e);
             return null;
         }
     }

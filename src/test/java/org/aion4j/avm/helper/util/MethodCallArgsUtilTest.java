@@ -270,4 +270,99 @@ public class MethodCallArgsUtilTest {
 
         System.out.println(printRes);
     }
+
+    @Test
+    public void testByteArray() throws Exception {
+        String arg = "-B 1 2 4 5";
+        Object[] objs = MethodCallArgsUtil.parseMethodArgs(arg);
+        System.out.println(objs);
+
+        assertTrue(objs.length == 1);
+        assertTrue(objs[0] instanceof byte[]);
+        assertEquals(4, ((byte[])objs[0]).length);
+    }
+
+    @Test
+    public void testByte2DArray() throws Exception {
+        String arg = "-B[][] \"1 2\" \"4 5\"";
+        Object[] objs = MethodCallArgsUtil.parseMethodArgs(arg);
+        System.out.println(objs);
+
+        assertTrue(objs.length == 1);
+        assertTrue(objs[0] instanceof byte[][]);
+        assertEquals((byte)1, ((byte[][])objs[0])[0][0]);
+        assertEquals((byte)2, ((byte[][])objs[0])[0][1]);
+        assertEquals((byte)4, ((byte[][])objs[0])[1][0]);
+        assertEquals((byte)5, ((byte[][])objs[0])[1][1]);
+    }
+
+    @Test
+    public void testByte2DArrayOtherFormat() throws Exception {
+        String arg = "-B[][] 1,2 4,5";
+        Object[] objs = MethodCallArgsUtil.parseMethodArgs(arg);
+        System.out.println(objs);
+
+        assertTrue(objs.length == 1);
+        assertTrue(objs[0] instanceof byte[][]);
+        assertEquals((byte)1, ((byte[][])objs[0])[0][0]);
+        assertEquals((byte)2, ((byte[][])objs[0])[0][1]);
+        assertEquals((byte)4, ((byte[][])objs[0])[1][0]);
+        assertEquals((byte)5, ((byte[][])objs[0])[1][1]);
+    }
+
+
+    @Test
+    public void testHexValueInByteOption() throws Exception {
+        String hexValue = "0xa02d00e708e8a865e67a06f7e7b9eeef748725ee5974d804778426de05b37f9c";
+
+        String args = "-B " + hexValue;
+        Object[] objs = MethodCallArgsUtil.parseMethodArgs(args);
+        System.out.println(objs);
+
+        byte[] result = (byte[])objs[0];
+        String resultHex = "0x" + HexUtil.bytesToHexString(result);
+
+        assertTrue(objs.length == 1);
+        assertTrue(objs[0] instanceof byte[]);
+        assertEquals(32, ((byte[])objs[0]).length);
+        assertEquals(hexValue, resultHex);
+    }
+
+    @Test
+    public void testHexValueInByteOption1DArray() throws Exception {
+        String hexValue = "0xa02d00e708e8a865e67a06f7e7b9eeef748725ee5974d804778426de05b37f9c";
+
+        String args = "-B[] " + hexValue;
+        Object[] objs = MethodCallArgsUtil.parseMethodArgs(args);
+        System.out.println(objs);
+
+        byte[] result = (byte[])objs[0];
+        String resultHex = "0x" + HexUtil.bytesToHexString(result);
+
+        assertTrue(objs.length == 1);
+        assertTrue(objs[0] instanceof byte[]);
+        assertEquals(32, ((byte[])objs[0]).length);
+        assertEquals(hexValue, resultHex);
+    }
+
+    @Test
+    public void testHexValueInByteOptionArray() throws Exception {
+        String hexValues = "0xa02d00e708e8a865e67a06f7e7b9eeef748725ee5974d804778426de05b37f9c 0xa03d13c46e913fee9316f363513d085915654c0bcda55bd7b4d8d2c7889b288f 0xa092de3423a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b283ca";
+
+        String args = "-B[][] " + hexValues;
+        Object[] objs = MethodCallArgsUtil.parseMethodArgs(args);
+        System.out.println(objs);
+
+        assertTrue(objs.length == 1);
+        assertTrue(objs[0] instanceof byte[][]);
+        byte[][] bs = (byte[][])objs[0];
+
+        assertEquals(32, bs[0].length);
+        assertEquals(32, bs[1].length);
+        assertEquals(32, bs[2].length);
+
+        assertEquals("a02d00e708e8a865e67a06f7e7b9eeef748725ee5974d804778426de05b37f9c", HexUtil.bytesToHexString(bs[0]));
+        assertEquals("a03d13c46e913fee9316f363513d085915654c0bcda55bd7b4d8d2c7889b288f", HexUtil.bytesToHexString(bs[1]));
+        assertEquals("a092de3423a1e77f4c5f8500564e3601759143b7c0e652a7012d35eb67b283ca", HexUtil.bytesToHexString(bs[2]));
+    }
 }

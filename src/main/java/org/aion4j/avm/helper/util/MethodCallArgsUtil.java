@@ -109,7 +109,13 @@ public class MethodCallArgsUtil {
             else if(type.startsWith("-C")) return Character.valueOf(token.charAt(0));
             else if(type.startsWith("-F")) return Float.valueOf(token);
             else if(type.startsWith("-D")) return Double.valueOf(token);
-            else if(type.startsWith("-B")) return Byte.valueOf(token);
+            else if(type.startsWith("-B")) {
+                if(token.startsWith("0x")) { //It's a hex value
+                    return HexUtil.hexStringToBytes(token);
+                } else {
+                    return Byte.valueOf(token);
+                }
+            }
             else if(type.startsWith("-Z")) return Boolean.valueOf(token);
             else if(type.startsWith("-A")) return new avm.Address(Helpers.hexStringToBytes(token));
             else if(type.startsWith("-T")) return token;
@@ -167,27 +173,42 @@ public class MethodCallArgsUtil {
     }
 
     private static Object get2DArray(String type, List list) throws MethodArgsParseException {
+        //exception for byte[][] -B[][]
+        if("-B[][]".equals(type) && list != null && list.size() > 1 && list.get(0).toString().startsWith("0x")) {
+            byte[][] bytes = null;
+            for (int i = 0; i < list.size(); i++) {
+                String hexValue = (String)list.get(i);
+                byte[] b = HexUtil.hexStringToBytes(hexValue);
 
-        int rows = list.size();
-        int cols = parseRowElementsIn2DArray((String)list.get(0)).length;
-
-        //create  2D array
-        Object a2dObj = init2DArray(type, rows, cols);
-
-        for(int i=0; i<list.size(); i++) {
-
-            String rawString = (String)list.get(i);
-            String[] tokens = parseRowElementsIn2DArray(rawString);
-
-            List elmList = new ArrayList();
-
-            for(int j=0; j<tokens.length; j++) {
-                Object value = convertStringToTypeObject(type, tokens[j]);
-                assignValueIn2DArray(type, a2dObj, i, j, value);
+                if(i == 0) {//initialize bytes 2nd dimension is based on the first byte[] size
+                    bytes = new byte[list.size()][b.length];
+                }
+                bytes[i] = b;
             }
-        }
 
-        return a2dObj;
+            return bytes;
+        } else { //For other 2D array
+            int rows = list.size();
+            int cols = parseRowElementsIn2DArray((String) list.get(0)).length;
+
+            //create  2D array
+            Object a2dObj = init2DArray(type, rows, cols);
+
+            for (int i = 0; i < list.size(); i++) {
+
+                String rawString = (String) list.get(i);
+                String[] tokens = parseRowElementsIn2DArray(rawString);
+
+                List elmList = new ArrayList();
+
+                for (int j = 0; j < tokens.length; j++) {
+                    Object value = convertStringToTypeObject(type, tokens[j]);
+                    assignValueIn2DArray(type, a2dObj, i, j, value);
+                }
+            }
+
+            return a2dObj;
+        }
     }
 
     private static String[] parseRowElementsIn2DArray(String rowStr) throws MethodArgsParseException {
@@ -485,12 +506,17 @@ public class MethodCallArgsUtil {
         return ret;
     }
 
-    private static byte[] toByteArray(List<Byte> list)  {
-        byte[] ret = new byte[list.size()];
-        int i = 0;
-        for (Byte e : list)
-            ret[i++] = e;
-        return ret;
+    private static byte[] toByteArray(List list)  {
+        if(list != null && list.size() == 1 && list.get(0) instanceof byte[]) { //For single hex value
+            byte[] ret = (byte [])list.get(0);
+            return ret;
+        } else {
+            byte[] ret = new byte[list.size()];
+            int i = 0;
+            for (Object e : list)
+                ret[i++] = (Byte) e;
+            return ret;
+        }
     }
 
     private static boolean[] toBooleanArray(List<Boolean> list)  {

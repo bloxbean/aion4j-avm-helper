@@ -348,6 +348,17 @@ public class LocalAvmNode {
             return balance;
     }
 
+    public BigInteger getNonce(String address) {
+        AionAddress account = new AionAddress(Helpers.hexStringToBytes(address));
+
+        BigInteger nonce = kernel.getNonce(account);
+
+        if(nonce == null)
+            return BigInteger.ZERO;
+        else
+            return nonce;
+    }
+
     public void explore(String dappAddress, PrintStream printStream) throws Exception {
 
         throw new UnsupportedOperationException("Explorer command is no longer supported.");

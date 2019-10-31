@@ -335,6 +335,15 @@ public class LocalAvmNodeTest {
         assertThat(currBalance, equalTo(balance));
     }
 
+    @Test
+    public void getNonceTest() throws Exception {
+        String address = "a0458c209555006804064bd488c16d5219179c90c3955caa04e3a1102f3ce7b2";
+        BigInteger balance = BigInteger.valueOf(500).multiply(BigInteger.valueOf(1000000000000000000L));
+
+        BigInteger nonce = localAvmNode.getNonce(address);
+        assertEquals(new BigInteger("0"), nonce);
+    }
+
     private static void writeByte(String file, byte[] bytes)
     {
         try {
