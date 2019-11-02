@@ -12,6 +12,7 @@ import org.aion4j.avm.helper.api.logs.Slf4jLog;
 import org.aion4j.avm.helper.exception.AVMRuntimeException;
 import org.aion4j.avm.helper.exception.RemoteAvmCallException;
 import org.aion4j.avm.helper.faucet.model.Challenge;
+import org.aion4j.avm.helper.faucet.model.Network;
 import org.aion4j.avm.helper.faucet.model.TopupResult;
 import org.aion4j.avm.helper.remote.RemoteAVMNode;
 import org.aion4j.avm.helper.remote.RemoteAvmAdapter;
@@ -30,11 +31,11 @@ import java.util.List;
 import java.util.Map;
 
 public class FaucetService {
-
     private final ClassLoader avmJarClassLoader;
     private String nodeUrl;
     private String faucetWebUrl;
     private String faucetContractAddress;
+    private String networkId;
     private Log log;
     private RemoteAvmAdapter remoteAvmAdapter;
 
@@ -45,11 +46,23 @@ public class FaucetService {
         this.avmJarClassLoader = avmJarClassLoader;
         this.nodeUrl = nodeUrl;
         this.faucetWebUrl = faucetWebUrl;
-        this.faucetContractAddress = faucetContractAddress;
         this.log = _log;
+
+        //In normal cases, faucetContractAddress is passed as null
+        Network network = resolveNetwork(nodeUrl, faucetContractAddress);
+        this.faucetContractAddress = network != null ? network.getFaucetContract() : null;
+        this.networkId = network != null ? network.getId() : null;
 
         if(this.log == null) {
             this.log = new Slf4jLog(LoggerFactory.getLogger(FaucetService.class));
+        }
+
+        log.info("Network                 : " + network.getNetwork());
+        log.info("Faucet contract address : " + network.getFaucetContract());
+        log.info("");
+
+        if(StringUtils.isEmpty(this.faucetContractAddress)) {
+            throw new AVMRuntimeException(String.format("Faucet contract address is not set for network : %s ", network.getNetwork()));
         }
 
         Log remoteAdapterLog = _log != null && !_log.isDebugEnabled() ? new ErrorDelegateLog(this.log) : this.log;
@@ -79,6 +92,16 @@ public class FaucetService {
                 return null;
             }
         });
+    }
+
+    private Network resolveNetwork(String nodeUrl, String faucetContractAddress) {
+        if(!StringUtils.isEmpty(faucetContractAddress)) //Custom contract address provided by user
+            return new Network(null, null, null, faucetContractAddress);
+
+        NetworkHelper networkHelper = new NetworkHelper(log);
+        Network network = networkHelper.getNetworkFromWeb3RpcUrl(nodeUrl);
+
+        return network;
     }
 
     public void setDefaultGas(long defaultGas) {
@@ -145,9 +168,14 @@ public class FaucetService {
         List<String> extensionList = new ArrayList<>();
         extensionList.add(String.valueOf(challenge.getCounter()));
         extensionList.add(account);
+        if(!StringUtils.isEmpty(this.networkId))
+            extensionList.add(this.networkId);
 
         //add counter to extension
         extensions.put("data", extensionList);
+
+        if(log.isDebugEnabled())
+            log.debug("Extensions >>>>>>> " + extensionList);
 
         log.info("Start genereting proof with value " + challenge.getValue());
 

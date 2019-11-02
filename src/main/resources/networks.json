@@ -1,0 +1,22 @@
+{
+  "networks": [
+    {
+      "id": "mastery",
+      "genesisHash": "0x1878e70918712e2f4cd9c4f1cfba6ff776b407fcf8ae64b686ab2cc673c18cb5",
+      "network": "Mastery",
+      "faucetContract": "0xa055dc67cd05d013a0b7c064708a0eb86e31c5edbaf00bca645665217779d9f2"
+    },
+    {
+      "id": "amity",
+      "genesisHash": "0x61cdae999f17e297c979cd2fa73f9eb05b4f7f0cea475c61ca023f3d93083f0c",
+      "network": "Amity",
+      "faucetContract": "0xa0d3460b4cc2e7cc17e220f95d6b03e13b5e048a82b52fe072a85577979e7f2f"
+    },
+    {
+      "id": "mainnet",
+      "genesisHash": "0x30793b4ea012c6d3a58c85c5b049962669369807a98e36807c1b02116417f823",
+      "network": "Mainnet - Kilimanjaro",
+      "faucetContract": ""
+    }
+  ]
+}

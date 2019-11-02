@@ -643,7 +643,30 @@ public class RemoteAVMNode {
 
             return blockNumber != null? blockNumber.toString(): null;
         } catch (UnirestException e) {
-            throw new AVMRuntimeException("Web3Rpc call failed for unlock account", e);
+            throw new AVMRuntimeException("Web3Rpc call failed to get latest block", e);
+        }
+    }
+
+    public String getGenesisBlockHash() {
+        try {
+            JSONObject jo = getJsonHeader("eth_getBlockByNumber");
+
+            List<String> params = new ArrayList<>();
+            params.add("earliest");
+            jo.put("params", params);
+
+            HttpResponse<JsonNode> jsonResponse = getHttpRequest()
+                    .body(jo)
+                    .asJson();
+
+            JsonNode jsonNode = jsonResponse.getBody();
+
+            JSONObject result = (JSONObject)jsonNode.getObject().get("result");
+            String blockHash = result.getString("hash");
+
+            return blockHash;
+        } catch (UnirestException e) {
+            throw new AVMRuntimeException("Web3Rpc call failed to get genesis block hash", e);
         }
     }
 
