@@ -112,6 +112,10 @@ public class RemoteAVMNode {
     }
 
     public String call(String contract, String address, String callData, BigInteger value, long gas, long gasPrice) {
+        return call(contract, address, callData, value, gas, gasPrice, null);
+    }
+
+    public String call(String contract, String address, String callData, BigInteger value, long gas, long gasPrice, String blockHeight) {
         try {
 
             log.info("Invoking method of the contract ...");
@@ -136,6 +140,10 @@ public class RemoteAVMNode {
             }
 
             paramArray.put(txnJo);
+
+            if(blockHeight != null) { //block height at blkNumber
+                paramArray.put(blockHeight);
+            }
 
             jo.put("params", paramArray);
 
@@ -303,6 +311,45 @@ public class RemoteAVMNode {
         }
     }
 
+    public String sendRawTransaction(String signedTx) {
+        try {
+            JSONObject jo = getJsonHeader("eth_sendRawTransaction");
+
+            if (!signedTx.startsWith("0x"))
+                signedTx = "0x" + signedTx;
+
+            List params = new ArrayList();
+            params.add(signedTx);
+
+            jo.put("params", params);
+
+            log.info("Web3Rpc request data: \n" + jo.toString(2));
+
+            HttpResponse<JsonNode> jsonResponse = getHttpRequest()
+                    .body(jo)
+                    .asJson();
+
+            JsonNode jsonNode = jsonResponse.getBody();
+
+            if (jsonNode == null)
+                return null;
+
+            log.info("Response from Aion kernel: \n" + jsonNode.getObject().toString(2));
+
+            JSONObject jsonObject = jsonNode.getObject();
+
+            String error = getError(jsonObject);
+
+            if (error == null) {
+                return jsonObject.optString("result");
+            } else {
+                throw new AVMRuntimeException("Transaction failed. Reason: " + error);
+            }
+        } catch (Exception e) {
+            throw new AVMRuntimeException("Transaction failed", e);
+        }
+    }
+
     /**
      * Get transaction count. Needed to get nonce of an address
      * @param address
@@ -348,8 +395,11 @@ public class RemoteAVMNode {
         }
     }
 
-
     public String getBalance(String address) {
+        return getBalance(address, null);
+    }
+
+    public String getBalance(String address, String blockHeight) {
 
         try {
 
@@ -357,7 +407,11 @@ public class RemoteAVMNode {
 
             List<String> params = new ArrayList();
             params.add(address);
-            params.add("latest");
+
+            if(blockHeight == null)
+                params.add("latest");
+            else
+                params.add(blockHeight);
 
             jo.put("params", params);
 
@@ -667,6 +721,28 @@ public class RemoteAVMNode {
             return blockHash;
         } catch (UnirestException e) {
             throw new AVMRuntimeException("Web3Rpc call failed to get genesis block hash", e);
+        }
+    }
+
+    public JSONObject getBlockByNumber(String blockNumber) {
+        try {
+            JSONObject jo = getJsonHeader("eth_getBlockByNumber");
+
+            List<String> params = new ArrayList<>();
+            params.add(blockNumber);
+            jo.put("params", params);
+
+            HttpResponse<JsonNode> jsonResponse = getHttpRequest()
+                    .body(jo)
+                    .asJson();
+
+            JsonNode jsonNode = jsonResponse.getBody();
+
+            JSONObject result = (JSONObject)jsonNode.getObject().get("result");
+
+            return result;
+        } catch (UnirestException e) {
+            throw new AVMRuntimeException("Web3Rpc call failed to get block by number", e);
         }
     }
 
