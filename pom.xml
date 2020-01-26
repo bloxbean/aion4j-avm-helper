@@ -4,7 +4,7 @@
 
     <groupId>org.aion4j</groupId>
     <artifactId>avm-helper</artifactId>
-    <version>0.8.3-SNAPSHOT</version>
+    <version>0.8.3</version>
     <packaging>jar</packaging>
     <name>aion4j-avm-helper</name>
     <description>Aion4j helper library for AVM (Aion Virtual Machine)</description>
@@ -27,7 +27,7 @@
         <url>https://github.com/bloxbean/aion4j-avm-helper/</url>
         <connection>scm:git:git@github.com:bloxbean/aion4j-avm-helper.git</connection>
         <developerConnection>scm:git:git@github.com:bloxbean/aion4j-avm-helper.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>avm-helper-0.8.3</tag>
     </scm>
 
     <properties>
